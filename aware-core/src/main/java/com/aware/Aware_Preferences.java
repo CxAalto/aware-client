@@ -2183,7 +2183,7 @@ public class Aware_Preferences extends Aware_Activity {
                                 if( Plugins_Manager.isInstalled( context, package_name) ) {
                                     Aware.startPlugin(context, package_name); //start plugin
                                 } else {
-
+                                    //TODO: This part is never excecuted since it's inside the else after checking version.
                                     //We don't have the plugin installed or bundled. Ask to install?
                                     if (Aware.DEBUG) Log.d(Aware.TAG, package_name + " is not installed yet!");
 

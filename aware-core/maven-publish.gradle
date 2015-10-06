@@ -20,9 +20,9 @@ uploadArchives {
     repositories.mavenDeployer {
         beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
 
-        repository( url: sonatypeRepo ) {
-            authentication(userName: sonatypeUsername, password: sonatypePassword)
-        }
+//        repository( url: sonatypeRepo ) {
+//            authentication(userName: sonatypeUsername, password: sonatypePassword)
+//        }
 
         pom.project {
             name 'AWARE'
