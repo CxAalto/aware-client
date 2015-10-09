@@ -62,11 +62,11 @@
             android:icon="@drawable/ic_launcher_aware"
             android:label="@string/aware_sensors"
             android:theme="@style/Theme.Aware"
-            android:launchMode="singleTop">
+            android:launchMode="singleTop"><!--
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
+            </intent-filter>-->
         </activity>
         <activity
             android:name="com.aware.ui.Stream_UI"
@@ -135,6 +135,19 @@
             android:launchMode="singleTop"
             android:theme="@android:style/Theme.DeviceDefault.Dialog">
         </activity>
+
+        <!-- TESTING -->
+        <activity
+            android:name=".Testing"
+            android:configChanges="keyboardHidden|orientation|screenSize"
+            android:launchMode="singleTop"
+            android:theme="@style/Theme.Aware">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
 
         <!-- Services -->
 

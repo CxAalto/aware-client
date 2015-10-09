@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="study_text_size">35dp</dimen>
+    <dimen name="small_circle_size">1dp</dimen>
+    <dimen name="normal_circle_size">80dp</dimen>
+</resources>

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<transitionManager xmlns:android="http://schemas.android.com/apk/res/android">
+    <transition
+        android:fromScene="@layout/aware_study_setup_download"
+        android:toScene="@layout/aware_study_setup_install"
+        android:transition="@transition/counter_transition"/>
+    <transition
+        android:fromScene="@layout/aware_study_setup_install"
+        android:toScene="@layout/aware_study_setup_download"
+        android:transition="@transition/install_download"/>
+    <transition
+        android:fromScene="@layout/aware_study_setup_setup"
+        android:toScene="@layout/aware_study_setup_install"
+        android:transition="@transition/default_transition"/>
+    <transition
+        android:toScene="@layout/aware_study_setup_setup"
+        android:transition="@transition/default_transition"/>
+    <transition
+        android:toScene="@layout/aware_study_setup_finish"
+        android:transition="@transition/default_transition"/>
+</transitionManager>

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<transitionSet xmlns:android="http://schemas.android.com/apk/res/android"
+    android:transitionOrdering="together">
+    <changeBounds android:duration="1500">
+        <targets>
+            <target android:targetId="@id/download_ids"/>
+            <target android:targetId="@id/download_text"/>
+            <target android:targetId="@id/install_ids"/>
+            <target android:targetId="@id/install_text"/>
+
+        </targets>
+        </changeBounds>
+    <fade android:fadingMode="fade_out" android:duration="1500">
+        <targets>
+            <target android:targetId="@id/download_check"/>
+            <target android:targetId="@id/install_content"/>
+        </targets>
+    </fade>
+    <fade android:fadingMode="fade_in" android:duration="1500">
+        <targets>
+            <target android:targetId="@id/install_check"/>
+        </targets>
+    </fade>
+</transitionSet>

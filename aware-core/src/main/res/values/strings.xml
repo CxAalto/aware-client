@@ -25,4 +25,13 @@
     <string name="aware_qrcode">QRCode</string>
     <string name="aware_esm_other">Other</string>
     <string name="aware_esm_other_follow">Can you be more specific, please?</string>
+
+    <string name="aware_download_text"># plugins for Aware need to be downloaded</string>
+    <string name="aware_download_text_done">Plugins downloaded</string>
+
+    <string name="aware_install_text"># plugins for Aware need to be installed</string>
+    <string name="aware_install_text_done">Plugins installed</string>
+
+    <string name="aware_setup_text">Setup Aware</string>
+    <string name="aware_setup_text_done">Aware is setup</string>
 </resources>

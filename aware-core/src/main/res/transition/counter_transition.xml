@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<transitionSet xmlns:android="http://schemas.android.com/apk/res/android"
+    android:transitionOrdering="together">
+    <changeBounds android:duration="1500">
+        <targets>
+            <target android:targetId="@id/text_background"/>
+        </targets>
+    </changeBounds>
+    <fade android:fadingMode="fade_out" android:duration="200">
+        <targets>
+            <target android:targetId="@id/checkmark"/>
+        </targets>
+    </fade>
+</transitionSet>
