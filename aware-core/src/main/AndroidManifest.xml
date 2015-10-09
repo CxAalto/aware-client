@@ -138,7 +138,7 @@
 
         <!-- TESTING -->
         <activity
-            android:name=".ATest"
+            android:name=".Testing"
             android:configChanges="keyboardHidden|orientation|screenSize"
             android:launchMode="singleTop"
             android:theme="@style/Theme.Aware">
