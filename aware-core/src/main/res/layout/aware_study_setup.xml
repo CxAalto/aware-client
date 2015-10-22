@@ -1,16 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical" android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:padding="16dp"
+    android:background="@color/blue">
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal"
-        android:textSize="40sp"
-        android:text="Study Setup"/>
+        android:gravity="center"
+        android:textSize="30sp"
+        android:text="Please complete this steps to join the study"/>
     <ImageView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="70dp"
+        android:layout_height="70dp"
         android:src="@drawable/ic_action_study"
         android:layout_gravity="center_horizontal"/>
     <TextView
@@ -23,180 +26,19 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Study descriptionfds fadsj fkasjdf asdjf laskdjfh alfh lisaf ;asidfj ;asdoifj "/>
-    <Space
+    <TextView
+        android:id="@+id/data_gathered_label"
         android:layout_width="wrap_content"
-        android:layout_height="25dp" />
-    <RelativeLayout
-        android:id="@+id/counter_container"
-        android:layout_gravity="center_horizontal"
-        android:layout_width="80dp"
-        android:layout_height="80dp"
-        android:background="@drawable/new_circle">
-        <TextView xmlns:android="http://schemas.android.com/apk/res/android"
-            android:id="@+id/checkmark"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textSize="25sp"
-            android:textColor="@android:color/white"
-            android:shadowColor="#7000"
-            android:shadowDx="6"
-            android:shadowDy="6"
-            android:shadowRadius="8"
-            android:layout_centerInParent="true" />
-        <ImageView
-            android:id="@+id/text_background"
-            android:layout_width="80dp"
-            android:layout_height="80dp"
-            android:foregroundGravity="top"
-            android:layout_alignParentRight="true"
-            android:layout_alignParentBottom="true"
-            android:src="@drawable/new_circle"
-            />
-
-        <LinearLayout
-            android:layout_width="80dp"
-            android:layout_height="80dp"
-            android:orientation="horizontal"
-            android:layout_centerHorizontal="true"
-            android:gravity="center">
-            <TextSwitcher
-                android:id="@+id/progress"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content">
-            </TextSwitcher>
-            <TextSwitcher
-                android:id="@+id/total"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content">
-            </TextSwitcher>
-        </LinearLayout>
-
-    </RelativeLayout>
-
-    <!--<FrameLayout
-        android:id="@+id/setup_study_root"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1">
-
-        <include layout="@layout/aware_study_setup_download"/>
-
-    </FrameLayout>-->
-
-    <RelativeLayout
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:layout_margin="10dp"
-        android:id="@+id/container">
-        <LinearLayout
-            android:id="@+id/download_ids"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:layout_alignParentTop="true"
-            >
-            <LinearLayout
-                android:id="@+id/download_id_text"
-                android:layout_width="match_parent"
-                android:layout_height="@dimen/study_text_size"
-                android:orientation="horizontal">
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:text="1. "/>
-                <TextSwitcher
-                    android:id="@+id/download_text"
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:gravity="center_vertical">
-                </TextSwitcher>
-            </LinearLayout>
-        </LinearLayout>
-        <LinearLayout
-            android:id="@+id/install_ids"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:layout_below="@id/download_ids"
-            >
-            <LinearLayout
-                android:id="@+id/install_id_text"
-                android:layout_width="match_parent"
-                android:layout_height="@dimen/study_text_size"
-                android:orientation="horizontal">
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:text="2. "/>
-                <TextSwitcher
-                    android:id="@+id/install_text"
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:gravity="center_vertical">
-                </TextSwitcher>
-                <CheckBox
-                    android:id="@+id/install_check"
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:gravity="center_vertical"
-                    android:checked="false"
-                    android:clickable="false"
-                    />
-            </LinearLayout>
-
-        </LinearLayout>
-        <LinearLayout
-            android:id="@+id/final_setup_ids"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:layout_below="@id/install_ids"
-            >
-            <LinearLayout
-                android:id="@+id/final_setup_ids_text"
-                android:layout_width="match_parent"
-                android:layout_height="@dimen/study_text_size"
-                android:orientation="horizontal">
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:text="3. "/>
-                <TextSwitcher
-                    android:id="@+id/setup_text"
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:gravity="center_vertical">
-                </TextSwitcher>
-                <CheckBox
-                    android:id="@+id/setup_check"
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:gravity="center_vertical"
-                    android:checked="false"
-                    android:clickable="false"
-                    />
-            </LinearLayout>
-
-        </LinearLayout>
-        <LinearLayout
-            android:id="@+id/final_finish_ids"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:layout_below="@id/final_setup_ids"
-            >
-
-        </LinearLayout>
-    </RelativeLayout>
-
-    <Button
-        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Toggle between scenes"
-        android:id="@+id/toggle_button"/>
-
+        android:layout_gravity="center_horizontal"
+        android:textSize="20sp"
+        android:text="Data gathered"/>
+    <GridView
+        android:id="@+id/sensors_gathered"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:numColumns="5"
+        android:gravity="center"
+        android:clipToPadding="false">
+    </GridView>
 </LinearLayout>

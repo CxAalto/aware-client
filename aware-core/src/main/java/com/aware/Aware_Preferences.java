@@ -8,7 +8,6 @@ import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.bluetooth.BluetoothAdapter;
-import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -36,7 +35,6 @@ import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
-import com.aware.providers.Aware_Provider;
 import com.aware.ui.Aware_Activity;
 import com.aware.ui.Plugins_Manager;
 import com.aware.utils.Https;
@@ -1789,6 +1787,7 @@ public class Aware_Preferences extends Aware_Activity {
                     Aware.setSetting(sContext, Aware_Preferences.STATUS_WEBSERVICE, webservice.isChecked());
                     if( webservice.isChecked() && Aware.getSetting(sContext, WEBSERVICE_SERVER).length() > 0 ) {
                         //setup and send data
+                        //TODO: Question 1
                         Intent study_config = new Intent(sContext, StudyConfig.class);
                         study_config.putExtra("study_url", Aware.getSetting(sContext, WEBSERVICE_SERVER));
                         sContext.startService(study_config);
@@ -2098,7 +2097,7 @@ public class Aware_Preferences extends Aware_Activity {
      * @param context
      * @param configs
      */
-    protected static void applySettings( Context context, JSONArray configs ) {
+    protected static void applySettings( Context context, JSONArray configs , boolean is_join_study) {
 
         boolean is_developer = Aware.getSetting(context, Aware_Preferences.DEBUG_FLAG).equals("true");
 
@@ -2155,7 +2154,7 @@ public class Aware_Preferences extends Aware_Activity {
         }
 
         //Now check plugins
-        new CheckPlugins(context).execute(active_plugins);
+        new CheckPlugins(context, is_join_study).execute(active_plugins);
 
         //Send data to server
         Intent sync = new Intent(Aware.ACTION_AWARE_SYNC_DATA);
@@ -2164,8 +2163,10 @@ public class Aware_Preferences extends Aware_Activity {
 
     public static class CheckPlugins extends AsyncTask<ArrayList<String>, Void, Void> {
         private Context context;
-        public CheckPlugins(Context c) {
+        private boolean is_join_study;
+        public CheckPlugins(Context c, boolean is_join_study) {
             this.context = c;
+            this.is_join_study = is_join_study;
         }
 
         @Override
@@ -2178,7 +2179,7 @@ public class Aware_Preferences extends Aware_Activity {
                         if( ! http_request.equals("[]") ) {
                             JSONObject json_package = new JSONObject(http_request);
                             if( json_package.getInt("version") > Plugins_Manager.getVersion(context, package_name) ) {
-                                Aware.downloadPlugin(context, package_name, true); //update the existing plugin
+                                Aware.downloadPlugin(context, package_name, true, is_join_study); //update the existing plugin
                             } else {
                                 if( Plugins_Manager.isInstalled( context, package_name) ) {
                                     Aware.startPlugin(context, package_name); //start plugin
@@ -2193,7 +2194,7 @@ public class Aware_Preferences extends Aware_Activity {
                                             .setPositiveButton("Install", new DialogInterface.OnClickListener() {
                                                 @Override
                                                 public void onClick(DialogInterface dialog, int which) {
-                                                    Aware.downloadPlugin(context, package_name, false);
+                                                    Aware.downloadPlugin(context, package_name, false, is_join_study);
                                                 }
                                             })
                                             .setNegativeButton("Cancel", null).show();
@@ -2226,6 +2227,7 @@ public class Aware_Preferences extends Aware_Activity {
 		@Override
     	protected void onHandleIntent(Intent intent) {
 			String study_url = intent.getStringExtra(EXTRA_JOIN_STUDY);
+            boolean is_join_study = intent.getBooleanExtra("is_join_study",false);
 			
 			if( Aware.DEBUG ) Log.d(Aware.TAG, "Joining: " + study_url);
 			
@@ -2241,20 +2243,32 @@ public class Aware_Preferences extends Aware_Activity {
                         Toast.makeText(getApplicationContext(), "This study is no longer available.", Toast.LENGTH_LONG).show();
                         return;
                     }
+                    //TODO: Remove notification from this part
+                    if(is_join_study)
+                    {
+                        Intent joinIntent = new Intent(getApplicationContext(), ATest.class);
+                        joinIntent.putExtra("configs_study",configs_study.toString());
+                        startActivity(joinIntent);
+                    }
+                    else
+                    {
+                        NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(getApplicationContext());
+                        mBuilder.setSmallIcon(R.drawable.ic_action_aware_studies);
+                        mBuilder.setContentTitle("AWARE");
+                        mBuilder.setContentText("Thanks for joining the study!");
+                        mBuilder.setAutoCancel(true);
 
-                    NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(getApplicationContext());
-                    mBuilder.setSmallIcon(R.drawable.ic_action_aware_studies);
-                    mBuilder.setContentTitle("AWARE");
-                    mBuilder.setContentText("Thanks for joining the study!");
-                    mBuilder.setAutoCancel(true);
+                        NotificationManager notManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+                        notManager.notify(33, mBuilder.build());
 
-                    NotificationManager notManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-                    notManager.notify(33, mBuilder.build());
+                        //TODO: apply settings change
+                        //Apply new configurations in AWARE Client
+                        applySettings(getApplicationContext(), configs_study, is_join_study);
+                    }
 
 					if( Aware.DEBUG ) Log.d(Aware.TAG, "Study configs: " + configs_study.toString(5));
-					
-					//Apply new configurations in AWARE Client
-					applySettings( getApplicationContext(), configs_study );
+
+
 
 				} catch (JSONException e) {
 					e.printStackTrace();

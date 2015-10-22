@@ -2,4 +2,11 @@
 <resources>
     <color name="card_shadow">#AFAFAF</color>
     <color name="grey_background">#E5E5E5</color>
+    <color name="white">#96ffffff</color>
+    <color name="gray">#31030303</color>
+    <color name="green">#81ff92</color>
+    <color name="blue">#81c6ff</color>
+    <color name="orange">#ffb545</color>
+    <color name="coral">#ff818c</color>
+    <color name="primary_blue">#33B5E5</color>
 </resources>

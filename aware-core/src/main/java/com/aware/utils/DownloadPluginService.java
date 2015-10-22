@@ -26,6 +26,7 @@ public class DownloadPluginService extends IntentService {
 
         String package_name = intent.getStringExtra("package_name");
         boolean is_update = intent.getBooleanExtra("is_update", false);
+        boolean is_join_study = intent.getBooleanExtra("is_join_study", false);
 
         if( Aware.DEBUG ) Log.d(Aware.TAG, "Trying to download: " + package_name);
 
@@ -51,7 +52,16 @@ public class DownloadPluginService extends IntentService {
                 request.setDestinationInExternalPublicDir("/", "AWARE/plugins/" + json_package.getString("package_name"));
 
                 DownloadManager manager = (DownloadManager) getSystemService(DOWNLOAD_SERVICE);
-                Aware.AWARE_PLUGIN_DOWNLOAD_IDS.add(manager.enqueue(request));
+
+                if(is_join_study)
+                {
+                    Aware.AWARE_PLUGIN_JOIN_DOWNLOAD_IDS.add(manager.enqueue(request));
+                }
+                else
+                {
+                    Aware.AWARE_PLUGIN_DOWNLOAD_IDS.add(manager.enqueue(request));
+                }
+
             } catch (JSONException e) {
                 e.printStackTrace();
             }

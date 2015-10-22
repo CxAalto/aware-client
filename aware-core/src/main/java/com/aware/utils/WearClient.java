@@ -111,6 +111,7 @@ public class WearClient extends Service implements GoogleApiClient.ConnectionCal
 
                 //Check if we are on different study, join study!
                 if( webserver.length() > 0 && ! Aware.getSetting(getApplicationContext(), Aware_Preferences.STATUS_WEBSERVICE).equals(webserver) ) {
+                    //TODO: Question 2
                     Intent study_config = new Intent(getApplicationContext(), Aware_Preferences.StudyConfig.class);
                     study_config.putExtra("study_url", webserver);
                     startService(study_config);

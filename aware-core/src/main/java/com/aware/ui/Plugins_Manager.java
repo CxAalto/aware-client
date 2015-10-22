@@ -268,7 +268,7 @@ public class Plugins_Manager extends Aware_Activity {
                                         pkg_view.setAlpha(0.5f);
                                         pkg_title.setText("Updating...");
                                         pkg_view.setOnClickListener(null);
-                                        Aware.downloadPlugin(getApplicationContext(), package_name, true);
+                                        Aware.downloadPlugin(getApplicationContext(), package_name, true, false);
                                     }
                                 });
                                 builder.create().show();
@@ -293,7 +293,7 @@ public class Plugins_Manager extends Aware_Activity {
                                         dialog.dismiss();
                                         if( ! Aware.is_watch(getApplicationContext()) ) {
                                             Toast.makeText(getApplicationContext(), "Downloading... please wait.", Toast.LENGTH_SHORT).show();
-                                            Aware.downloadPlugin(getApplicationContext(), package_name, false);
+                                            Aware.downloadPlugin(getApplicationContext(), package_name, false, false);
                                         } else {
                                             Toast.makeText(getApplicationContext(), "Please, use the phone to install plugins.", Toast.LENGTH_LONG).show();
                                         }

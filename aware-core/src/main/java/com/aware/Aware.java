@@ -1,7 +1,6 @@
 
 package com.aware;
 
-import android.app.ActivityManager;
 import android.app.AlarmManager;
 import android.app.DownloadManager;
 import android.app.DownloadManager.Query;
@@ -14,7 +13,6 @@ import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.ContentValues;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
@@ -39,7 +37,6 @@ import android.os.Environment;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
-import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.CardView;
 import android.util.Log;
 import android.view.View;
@@ -147,10 +144,34 @@ public class Aware extends Service {
      */
     private static long AWARE_FRAMEWORK_DOWNLOAD_ID = 0;
 
+    //TODO: Update comments
+    /**
+     * Received broadcast on ATest modules
+     * - Updates the UI
+     */
+    public static final String AWARE_DOWNLOADS_FINISHED = "AWARE_DOWNLOADS_FINISHED";
+
+    //TODO: Update comments
+    /**
+     * Received broadcast on ATest modules
+     * - Updates the UI
+     */
+    public static final String AWARE_DOWNLOADS_FAILED = "AWARE_DOWNLOADS_FAILED";
+
     /**
      * DownloadManager queue for plugins, in case we have multiple dependencies to install.
      */
     public static final ArrayList<Long> AWARE_PLUGIN_DOWNLOAD_IDS = new ArrayList<>();
+
+    /**
+     * DownloadManager queue for plugins when joining study, in case we have multiple dependencies to install.
+     */
+    public static final ArrayList<Long> AWARE_PLUGIN_JOIN_DOWNLOAD_IDS = new ArrayList<>();
+
+    /**
+     * DownloadManager queue for plugins when joining study to install, in case we have multiple dependencies to install.
+     */
+    public static final ArrayList<String> AWARE_PLUGIN_JOIN_INSTALL_PATHS = new ArrayList<>();
 
     /**
      * DownloadManager queue for plugins, in case we have multiple dependencies to install.
@@ -565,7 +586,7 @@ public class Aware extends Service {
      * @param package_name
      * @param is_update
      */
-    public static void downloadPlugin( Context context, String package_name, boolean is_update ) {
+    public static void downloadPlugin( Context context, String package_name, boolean is_update, boolean is_join_study ) {
     	if( is_queued(package_name) ) return;
 
         AWARE_PLUGIN_DOWNLOAD_PACKAGES.add(package_name);
@@ -573,6 +594,7 @@ public class Aware extends Service {
         Intent pluginIntent = new Intent(context, DownloadPluginService.class);
     	pluginIntent.putExtra("package_name", package_name);
     	pluginIntent.putExtra("is_update", is_update);
+        pluginIntent.putExtra("is_join_study",is_join_study);
 		context.startService(pluginIntent);
     }
 
@@ -1233,7 +1255,7 @@ public class Aware extends Service {
         protected void onHandleIntent(Intent intent) {
             ArrayList<String> packages = intent.getStringArrayListExtra("updated");
             for( String package_name : packages ) {
-                Aware.downloadPlugin(getApplicationContext(), package_name, true);
+                Aware.downloadPlugin(getApplicationContext(), package_name, true, false);
             }
         }
     }
@@ -1369,7 +1391,7 @@ public class Aware extends Service {
                             if( cur != null && cur.moveToFirst() ) {
                                 if( cur.getInt(cur.getColumnIndex(DownloadManager.COLUMN_STATUS)) == DownloadManager.STATUS_SUCCESSFUL ) {
                                     String filePath = cur.getString(cur.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI));
-
+                                    //Installs the plugin that finished downloading
                                     if( Aware.DEBUG ) Log.d(Aware.TAG, "Plugin to install: " + filePath);
 
                                     File mFile = new File( Uri.parse(filePath).getPath() );
@@ -1383,10 +1405,39 @@ public class Aware extends Service {
                             }
                             if( cur != null && ! cur.isClosed() ) cur.close();
                             AWARE_PLUGIN_DOWNLOAD_IDS.remove(downloaded_id);//dequeue
+                            break;
                 	    }
                 	}
             	}
-                if( AWARE_PLUGIN_DOWNLOAD_IDS.size() == 0 ) AWARE_PLUGIN_DOWNLOAD_PACKAGES.clear();
+
+                if( AWARE_PLUGIN_JOIN_DOWNLOAD_IDS.size() > 0 ) {
+                    for( int i = 0; i < AWARE_PLUGIN_JOIN_DOWNLOAD_IDS.size(); i++ ) {
+                        long queue = AWARE_PLUGIN_JOIN_DOWNLOAD_IDS.get(i);
+                        if( queue == downloaded_id ) {
+                            Cursor cur = manager.query(new Query().setFilterById(queue));
+                            if( cur != null && cur.moveToFirst() ) {
+                                if( cur.getInt(cur.getColumnIndex(DownloadManager.COLUMN_STATUS)) == DownloadManager.STATUS_SUCCESSFUL ) {
+
+                                    String filePath = cur.getString(cur.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI));
+                                    AWARE_PLUGIN_JOIN_INSTALL_PATHS.add(filePath);
+
+                                }
+                                else
+                                {
+                                    context.sendBroadcast(new Intent(Aware.AWARE_DOWNLOADS_FAILED));
+                                }
+                            }
+                            if( cur != null && ! cur.isClosed() ) cur.close();
+                            AWARE_PLUGIN_JOIN_DOWNLOAD_IDS.remove(downloaded_id);//dequeue
+                            break;
+                        }
+                    }
+                }
+                if(AWARE_PLUGIN_JOIN_DOWNLOAD_IDS.size() == 0)
+                {
+                    if( AWARE_PLUGIN_DOWNLOAD_IDS.size() == 0 ) AWARE_PLUGIN_DOWNLOAD_PACKAGES.clear();
+                    context.sendBroadcast(new Intent(Aware.AWARE_DOWNLOADS_FINISHED));
+                }
             }
         }
     }
