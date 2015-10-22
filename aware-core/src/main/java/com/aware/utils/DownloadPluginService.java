@@ -38,7 +38,7 @@ public class DownloadPluginService extends IntentService {
                 JSONObject json_package = new JSONObject(response);
 
                 //Create the folder where all the databases will be stored on external storage
-                File folders = new File(Environment.getExternalStorageDirectory()+"/AWARE/plugins/");
+                File folders = new File( getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS) + "/AWARE/", "plugins");
                 folders.mkdirs();
 
                 String package_url = "http://plugins.awareframework.com/" + json_package.getString("package_path").replace("/uploads/", "") + json_package.getString("package_name");
@@ -49,7 +49,9 @@ public class DownloadPluginService extends IntentService {
                     request.setDescription("Updating...");
                 }
                 request.setTitle(json_package.getString("title"));
-                request.setDestinationInExternalPublicDir("/", "AWARE/plugins/" + json_package.getString("package_name"));
+                request.setDestinationInExternalFilesDir(getApplicationContext(), Environment.DIRECTORY_DOCUMENTS, "AWARE/plugins/" + json_package.getString("package_name"));
+
+//                request.setDestinationInExternalPublicDir("/", "AWARE/plugins/" + json_package.getString("package_name"));
 
                 DownloadManager manager = (DownloadManager) getSystemService(DOWNLOAD_SERVICE);
 
