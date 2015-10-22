@@ -1,6 +1,8 @@
 
 package com.aware;
 
+import android.*;
+import android.Manifest;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.IntentService;
@@ -20,6 +22,7 @@ import android.hardware.SensorManager;
 import android.location.LocationManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Environment;
 import android.preference.CheckBoxPreference;
 import android.preference.EditTextPreference;
 import android.preference.ListPreference;
@@ -28,6 +31,7 @@ import android.preference.PreferenceActivity;
 import android.preference.PreferenceManager;
 import android.preference.PreferenceScreen;
 import android.support.v4.app.NotificationCompat;
+import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -35,6 +39,33 @@ import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
+import com.aware.providers.Accelerometer_Provider;
+import com.aware.providers.Applications_Provider;
+import com.aware.providers.Barometer_Provider;
+import com.aware.providers.Battery_Provider;
+import com.aware.providers.Bluetooth_Provider;
+import com.aware.providers.Communication_Provider;
+import com.aware.providers.ESM_Provider;
+import com.aware.providers.Gravity_Provider;
+import com.aware.providers.Gyroscope_Provider;
+import com.aware.providers.Installations_Provider;
+import com.aware.providers.Keyboard_Provider;
+import com.aware.providers.Light_Provider;
+import com.aware.providers.Linear_Accelerometer_Provider;
+import com.aware.providers.Locations_Provider;
+import com.aware.providers.Magnetometer_Provider;
+import com.aware.providers.Mqtt_Provider;
+import com.aware.providers.Network_Provider;
+import com.aware.providers.Processor_Provider;
+import com.aware.providers.Proximity_Provider;
+import com.aware.providers.Rotation_Provider;
+import com.aware.providers.Scheduler_Provider;
+import com.aware.providers.Screen_Provider;
+import com.aware.providers.Telephony_Provider;
+import com.aware.providers.Temperature_Provider;
+import com.aware.providers.TimeZone_Provider;
+import com.aware.providers.Traffic_Provider;
+import com.aware.providers.WiFi_Provider;
 import com.aware.ui.Aware_Activity;
 import com.aware.ui.Plugins_Manager;
 import com.aware.utils.Https;
@@ -43,6 +74,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
@@ -466,10 +498,14 @@ public class Aware_Preferences extends Aware_Activity {
      */
     public static final String STATUS_KEYBOARD = "status_keyboard";
 
+    private final String AWARE_VERSION = "aware_version";
+
     private static final Aware framework = Aware.getService();
     private static SensorManager mSensorMgr;
     private static Context sContext;
     private static PreferenceActivity sPreferences;
+
+    final private int REQUEST_CODE_WRITE_STORAGE = 999;
 
     @Override
     protected Dialog onCreateDialog(int id) {
@@ -501,42 +537,14 @@ public class Aware_Preferences extends Aware_Activity {
         return dialog;
     }
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        
-        mSensorMgr = (SensorManager) getSystemService(SENSOR_SERVICE);
-        is_watch = Aware.is_watch(this);
-        sContext = getApplicationContext();
-        sPreferences = this;
+    private boolean isDirty() {
+        File f = new File(Environment.getExternalStorageDirectory() + "/AWARE");
+        if( f.exists() ) return true;
+        return false;
+    }
 
-        //Start the Aware
-        Intent startAware = new Intent( getApplicationContext(), Aware.class );
-        startService(startAware);
-
-        SharedPreferences prefs = getSharedPreferences( getPackageName(), Context.MODE_PRIVATE );
-    	if( prefs.getAll().isEmpty() && Aware.getSetting(getApplicationContext(), Aware_Preferences.DEVICE_ID).length() == 0 ) {
-            PreferenceManager.setDefaultValues(getApplicationContext(), getPackageName(), Context.MODE_PRIVATE, R.xml.aware_preferences, true);
-    		prefs.edit().commit(); //commit changes
-    	} else {
-    		PreferenceManager.setDefaultValues(getApplicationContext(), getPackageName(), Context.MODE_PRIVATE, R.xml.aware_preferences, false);
-    	}
-    	
-    	Map<String,?> defaults = prefs.getAll();
-        for(Map.Entry<String, ?> entry : defaults.entrySet()) {
-            if( Aware.getSetting(getApplicationContext(), entry.getKey()).length() == 0 ) {
-                Aware.setSetting(getApplicationContext(), entry.getKey(), entry.getValue());
-            }
-        }
-        
-    	if( Aware.getSetting(getApplicationContext(), Aware_Preferences.DEVICE_ID).length() == 0 ) {
-        	UUID uuid = UUID.randomUUID();
-            Aware.setSetting(getApplicationContext(), Aware_Preferences.DEVICE_ID, uuid.toString());
-    	}
-
-        addPreferencesFromResource(R.xml.aware_preferences);
-        setContentView(R.layout.aware_ui);
-
+    private void defaultSettings() {
+        SharedPreferences prefs = getSharedPreferences(getPackageName(), Context.MODE_PRIVATE);
         if( ! prefs.contains("intro_done") ) {
             final ViewGroup parent = (ViewGroup) findViewById(android.R.id.content);
             final LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT);
@@ -559,15 +567,144 @@ public class Aware_Preferences extends Aware_Activity {
                     parent.removeView(help_menu);
                 }
             });
-
-            SharedPreferences.Editor editor = prefs.edit();
-            editor.putBoolean("intro_done", true);
-            editor.commit();
+            prefs.edit().putBoolean("intro_done", true).commit();
         }
 
         developerOptions();
         servicesOptions();
         logging();
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if( requestCode == REQUEST_CODE_WRITE_STORAGE ) {
+            if( grantResults.length > 0 && grantResults[0] != PackageManager.PERMISSION_GRANTED ) {
+                Toast.makeText(this, "AWARE external storage access required!", Toast.LENGTH_SHORT).show();
+                Intent aware = new Intent( getApplicationContext(), Aware.class );
+
+                stopService(aware);
+                framework.stopAllServices();
+                framework.stopSelf();
+                finish();
+            }
+        }
+    }
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        
+        mSensorMgr = (SensorManager) getSystemService(SENSOR_SERVICE);
+        is_watch = Aware.is_watch(this);
+        sContext = getApplicationContext();
+        sPreferences = this;
+
+        int permissionCheck = ContextCompat.checkSelfPermission(Aware_Preferences.this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
+        if( permissionCheck != PackageManager.PERMISSION_GRANTED ) {
+            if( ! shouldShowRequestPermissionRationale(Manifest.permission.WRITE_EXTERNAL_STORAGE) ) {
+                requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_CODE_WRITE_STORAGE);
+            }
+        }
+
+        //Start the Aware
+        Intent startAware = new Intent( getApplicationContext(), Aware.class );
+        startService(startAware);
+
+        SharedPreferences prefs = getSharedPreferences(getPackageName(), Context.MODE_PRIVATE);
+        if( prefs.getAll().isEmpty() && Aware.getSetting(getApplicationContext(), Aware_Preferences.DEVICE_ID).length() == 0 ) {
+            PreferenceManager.setDefaultValues(getApplicationContext(), getPackageName(), Context.MODE_PRIVATE, R.xml.aware_preferences, true);
+            prefs.edit().commit(); //commit changes
+        } else {
+            PreferenceManager.setDefaultValues(getApplicationContext(), getPackageName(), Context.MODE_PRIVATE, R.xml.aware_preferences, false);
+        }
+
+        Map<String,?> defaults = prefs.getAll();
+        for(Map.Entry<String, ?> entry : defaults.entrySet()) {
+            if( Aware.getSetting(getApplicationContext(), entry.getKey()).length() == 0 ) {
+                Aware.setSetting(getApplicationContext(), entry.getKey(), entry.getValue());
+            }
+        }
+        if( Aware.getSetting(getApplicationContext(), Aware_Preferences.DEVICE_ID).length() == 0 ) {
+            UUID uuid = UUID.randomUUID();
+            Aware.setSetting(getApplicationContext(), Aware_Preferences.DEVICE_ID, uuid.toString());
+        }
+
+        addPreferencesFromResource(R.xml.aware_preferences);
+        setContentView(R.layout.aware_ui);
+
+        try {
+            PackageInfo awarePkg = getPackageManager().getPackageInfo("com.aware", 0);
+            int aware_version = awarePkg.versionCode;
+
+            //First time installing, updating AWARE
+            if( ( ! prefs.contains(AWARE_VERSION) && isDirty()) || ( prefs.contains(AWARE_VERSION) && prefs.getInt(AWARE_VERSION, 0) != aware_version ) ) {
+                AlertDialog.Builder builder = new AlertDialog.Builder(Aware_Preferences.this);
+                builder.setMessage(R.string.aware_dirty);
+                builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        defaultSettings();
+                    }
+                });
+                builder.setPositiveButton("Clean", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+
+                        //Reset settings to default
+                        Aware.reset(getApplicationContext());
+
+                        //Reset core ContentProviders
+                        Accelerometer_Provider.resetDB(getApplicationContext());
+                        Applications_Provider.resetDB(getApplicationContext());
+                        Barometer_Provider.resetDB(getApplicationContext());
+                        Battery_Provider.resetDB(getApplicationContext());
+                        Bluetooth_Provider.resetDB(getApplicationContext());
+                        Communication_Provider.resetDB(getApplicationContext());
+                        ESM_Provider.resetDB(getApplicationContext());
+                        Gravity_Provider.resetDB(getApplicationContext());
+                        Gyroscope_Provider.resetDB(getApplicationContext());
+                        Installations_Provider.resetDB(getApplicationContext());
+                        Keyboard_Provider.resetDB(getApplicationContext());
+                        Light_Provider.resetDB(getApplicationContext());
+                        Linear_Accelerometer_Provider.resetDB(getApplicationContext());
+                        Locations_Provider.resetDB(getApplicationContext());
+                        Magnetometer_Provider.resetDB(getApplicationContext());
+                        Mqtt_Provider.resetDB(getApplicationContext());
+                        Network_Provider.resetDB(getApplicationContext());
+                        Processor_Provider.resetDB(getApplicationContext());
+                        Proximity_Provider.resetDB(getApplicationContext());
+                        Rotation_Provider.resetDB(getApplicationContext());
+                        Scheduler_Provider.resetDB(getApplicationContext());
+                        Screen_Provider.resetDB(getApplicationContext());
+                        Telephony_Provider.resetDB(getApplicationContext());
+                        Temperature_Provider.resetDB(getApplicationContext());
+                        TimeZone_Provider.resetDB(getApplicationContext());
+                        Traffic_Provider.resetDB(getApplicationContext());
+                        WiFi_Provider.resetDB(getApplicationContext());
+
+                        //Restart activity
+                        Intent intent = getIntent();
+                        finish();
+                        startActivity(intent);
+                    }
+                });
+                AlertDialog dialog = builder.create();
+                dialog.show();
+
+                prefs.edit().putInt(AWARE_VERSION, aware_version).commit();
+            }
+
+            defaultSettings();
+
+            //Check if AWARE is active on the accessibility services
+            if( ! Aware.is_watch(sContext) ) {
+                Applications.isAccessibilityServiceActive(sContext);
+            }
+
+        } catch (NameNotFoundException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
