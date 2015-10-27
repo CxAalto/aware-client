@@ -36,9 +36,16 @@
     <GridView
         android:id="@+id/sensors_gathered"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
         android:numColumns="5"
         android:gravity="center"
         android:clipToPadding="false">
     </GridView>
+    <TextView
+        android:id="@+id/accesibility_message"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        android:text="* Accesibility services are required for this study"/>
 </LinearLayout>

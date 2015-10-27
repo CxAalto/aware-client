@@ -32,10 +32,12 @@ public class PageFragment extends AppCompatDialogFragment {
     private JSONArray jsonArray;
     private List<Sensor_Card_Info> sensors;
     private boolean empty;
+    private boolean accesibilityNedded;
 
     public PageFragment(int nLayout, int step, JSONArray jsonArray)
     {
         empty = false;
+        accesibilityNedded = false;
         theLayout = nLayout;
         this.step = step;
         this.jsonArray = jsonArray;
@@ -72,6 +74,14 @@ public class PageFragment extends AppCompatDialogFragment {
                 {
                     GridView gridView = (GridView) rootView.findViewById(R.id.sensors_gathered);
                     gridView.setAdapter(new Sensor_Adapter(context, 0, sensors));
+                    if(accesibilityNedded)
+                    {
+                        rootView.findViewById(R.id.accesibility_message).setVisibility(View.VISIBLE);
+                    }
+                    else
+                    {
+                        rootView.findViewById(R.id.accesibility_message).setVisibility(View.GONE);
+                    }
                 }
                 break;
         }
@@ -86,6 +96,13 @@ public class PageFragment extends AppCompatDialogFragment {
             try {
                 JSONObject sensor_config = jsonArray.getJSONObject(i);
                 sensors.add(new Sensor_Card_Info(sensor_config.getString("key")));
+                if(sensor_config.getString("key").equalsIgnoreCase(Aware_Preferences.STATUS_APPLICATIONS) ||
+                        sensor_config.getString("key").equalsIgnoreCase(Aware_Preferences.STATUS_NOTIFICATIONS) ||
+                        sensor_config.getString("key").equalsIgnoreCase(Aware_Preferences.STATUS_CRASHES) ||
+                        sensor_config.getString("key").equalsIgnoreCase(Aware_Preferences.STATUS_INSTALLATIONS))
+                {
+                    accesibilityNedded = true;
+                }
             } catch (JSONException e) {
                 e.printStackTrace();
                 //TODO: handle error
