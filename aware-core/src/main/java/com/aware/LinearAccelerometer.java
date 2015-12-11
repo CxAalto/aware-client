@@ -75,8 +75,7 @@ public class LinearAccelerometer extends Aware_Sensor implements SensorEventList
      * Until today, no available Android phone samples higher than 208Hz (Nexus 7).
      * http://ilessendata.blogspot.com/2012/11/android-accelerometer-sampling-rates.html
      */
-    private static ContentValues[] data_buffer;
-    private static List<ContentValues> data_values = new ArrayList<ContentValues>();
+    private List<ContentValues> data_values = new ArrayList<ContentValues>();
 
     private static String LABEL = "";
 
@@ -118,11 +117,11 @@ public class LinearAccelerometer extends Aware_Sensor implements SensorEventList
             return;
         }
 
-        data_buffer = new ContentValues[data_values.size()];
+        ContentValues[] data_buffer = new ContentValues[data_values.size()];
         data_values.toArray(data_buffer);
 
         try {
-        	if( Aware.getSetting(getApplicationContext(), Aware_Preferences.DEBUG_DB_SLOW).equals("false") ) {
+            if( ! Aware.getSetting(getApplicationContext(), Aware_Preferences.DEBUG_DB_SLOW).equals("true") ) {
         		new AsyncStore().execute(data_buffer);
         	}
         	

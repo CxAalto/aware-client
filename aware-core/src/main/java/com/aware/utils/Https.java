@@ -42,28 +42,37 @@ public class Https {
 	private static final String TAG = "AWARE::HTTPS";
 
     private static SSLContext sslContext;
-//    private static HostnameVerifier sslHostVerifier;
     private static Context sContext;
 
-	public Https(Context c) {
+    /**
+     * The InputStream certificate should be:
+     * getResources().openRawResource(R.raw.yourcertificate)<br/>
+     * where the certificate is a .crt public key for connecting to your server.
+     * @param c
+     * @param certificate
+     */
+	public Https(Context c, InputStream certificate ) {
 		sContext = c;
-
         if( c.getPackageName().equalsIgnoreCase("com.aware") ) {
             Intent wearClient = new Intent(sContext, WearClient.class);
             sContext.startService(wearClient);
         }
 
         try {
-            //Load AWARE's SSL public certificate so we can talk with our server
-            CertificateFactory cf = CertificateFactory.getInstance("X.509");
-            InputStream caInput = new BufferedInputStream(sContext.getResources().openRawResource(R.raw.awareframework));
-            Certificate ca = cf.generateCertificate(caInput);
-            KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
-            keyStore.load(null, null); //initialize as empty keystore
-            keyStore.setCertificateEntry("ca", ca); //add our certificate to keystore
 
+            KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
             TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
             trustManagerFactory.init(keyStore); //add our keystore to the trusted keystores
+
+            if( certificate != null ) {
+                //Load SSL public certificate so we can talk with the server
+                CertificateFactory cf = CertificateFactory.getInstance("X.509");
+                InputStream caInput = new BufferedInputStream(certificate);
+                Certificate ca = cf.generateCertificate(caInput);
+                keyStore.load(null, null); //initialize as empty keystore
+                keyStore.setCertificateEntry("ca", ca); //add our certificate to keystore
+                trustManagerFactory.init(keyStore); //add our keystore to the trusted keystores
+            }
 
             //Initialize a SSL connection context
             sslContext = SSLContext.getInstance("TLS");
@@ -143,8 +152,10 @@ public class Https {
 			HttpsURLConnection path_connection = (HttpsURLConnection) path.openConnection();
             path_connection.setSSLSocketFactory(sslContext.getSocketFactory());
             path_connection.setReadTimeout(10000);
-			path_connection.setConnectTimeout(10000);
+            path_connection.setConnectTimeout(10000);
 			path_connection.setRequestMethod("POST");
+            path_connection.setDoOutput(true);
+
 			if( is_gzipped ) path_connection.setRequestProperty("accept-encoding","gzip");
 
 			Uri.Builder builder = new Uri.Builder();
@@ -249,6 +260,8 @@ public class Https {
             path_connection.setReadTimeout(10000);
             path_connection.setConnectTimeout(10000);
             path_connection.setRequestMethod("GET");
+            path_connection.setDoInput(true);
+
             if( is_gzipped ) path_connection.setRequestProperty("accept-encoding","gzip");
 
             if(Aware.DEBUG) {
@@ -295,11 +308,9 @@ public class Https {
     private void print_https_cert(HttpsURLConnection con){
         if(con!=null){
             try {
-                String output = "";
-
+                String output = "Using SSL to connect to server!\n";
                 output+="Response Code : " + con.getResponseCode() +"\n";
                 output+="Cipher Suite : " + con.getCipherSuite() + "\n";
-
                 Certificate[] certs = con.getServerCertificates();
                 for(Certificate cert : certs){
                     output+=("Cert Type : " + cert.getType()) + "\n";
@@ -307,9 +318,7 @@ public class Https {
                     output+=("Cert Public Key Algorithm : " + cert.getPublicKey().getAlgorithm()) + "\n";
                     output+=("Cert Public Key Format : " + cert.getPublicKey().getFormat()) + "\n\n";
                 }
-
                 Log.d(TAG, output);
-
             } catch (SSLPeerUnverifiedException e) {
                 e.printStackTrace();
             } catch (IOException e){

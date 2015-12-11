@@ -8,11 +8,8 @@ import android.content.Intent;
 import android.content.res.Configuration;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.preference.PreferenceActivity;
-import android.support.annotation.LayoutRes;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
-import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -30,6 +27,7 @@ import com.aware.Aware;
 import com.aware.Aware_Preferences;
 import com.aware.Aware_Preferences.StudyConfig;
 import com.aware.R;
+import com.aware.utils.Http;
 import com.aware.utils.Https;
 import com.aware.utils.WearClient;
 
@@ -104,7 +102,7 @@ public class Aware_Activity extends AppCompatPreferenceActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getTitle().toString().equals("QRCode")) {
-            Intent join_study = new Intent(Aware_Activity.this, CameraStudy.class);
+            Intent join_study = new Intent(Aware_Activity.this, Aware_QRCode.class);
             startActivityForResult(join_study, Aware_Preferences.REQUEST_JOIN_STUDY);
         }
         if (item.getTitle().toString().equals("Team")) {
@@ -155,7 +153,7 @@ public class Aware_Activity extends AppCompatPreferenceActivity {
 	            			break;
 		            	case 3: //Join study
 		            		//TODO: make ui for listing available studies
-                            Intent join_study = new Intent(getApplicationContext(), CameraStudy.class);
+                            Intent join_study = new Intent(getApplicationContext(), Aware_QRCode.class);
                             startActivityForResult(join_study, Aware_Preferences.REQUEST_JOIN_STUDY);
 		            		break;
 	            	}
@@ -204,11 +202,20 @@ public class Aware_Activity extends AppCompatPreferenceActivity {
         @Override
         protected JSONObject doInBackground(String... params) {
             study_url = params[0];
+
             String study_api_key = study_url.substring(study_url.lastIndexOf("/")+1, study_url.length());
+            String study_host = study_url.substring(0, study_url.indexOf("/index.php"));
+            String protocol = study_url.substring(0, study_url.indexOf(":"));
 
             if( study_api_key.length() == 0 ) return null;
 
-            String request = new Https(getApplicationContext()).dataGET("https://api.awareframework.com/index.php/webservice/client_get_study_info/" + study_api_key, true);
+            String request = "";
+            if( protocol.equals("https") ) {
+                request = new Https(getApplicationContext(), getResources().openRawResource(R.raw.awareframework)).dataGET( study_host + "/index.php/webservice/client_get_study_info/" + study_api_key, true);
+            } else {
+                request = new Http(getApplicationContext()).dataGET( study_host + "/index.php/webservice/client_get_study_info/" + study_api_key, true);
+            }
+
             if( request != null ) {
                 try {
                     if( request.equals("[]") ) {

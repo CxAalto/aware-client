@@ -1,18 +1,24 @@
 
 package com.aware.utils;
 
+import android.Manifest;
 import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.IBinder;
+import android.support.v4.content.ContextCompat;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.aware.Aware;
 import com.aware.Aware_Preferences;
+import com.aware.ui.PermissionsHandler;
 
+import java.util.ArrayList;
 import java.util.Calendar;
 
 /**
@@ -50,6 +56,11 @@ public class Aware_Plugin extends Service {
      * Context ContentProvider Uris 
      */
     public Uri[] CONTEXT_URIS = null;
+
+    /**
+     * Permissions needed for this plugin to run
+     */
+    public ArrayList<String> REQUIRED_PERMISSIONS = new ArrayList<>();
     
     /**
      * Plugin is inactive
@@ -60,7 +71,9 @@ public class Aware_Plugin extends Service {
      * Plugin is active
      */
     public static final int STATUS_PLUGIN_ON = 1;
-    
+
+    private Intent aware;
+
     @Override
     public void onCreate() {
         super.onCreate();
@@ -78,6 +91,11 @@ public class Aware_Plugin extends Service {
         filter.addAction(Aware.ACTION_AWARE_STOP_PLUGINS);
         filter.addAction(Aware.ACTION_AWARE_SPACE_MAINTENANCE);
         registerReceiver(contextBroadcaster, filter);
+
+        REQUIRED_PERMISSIONS.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);
+
+        aware = new Intent(getApplicationContext(), Aware.class);
+        startService(aware);
     }
     
     @Override
@@ -87,15 +105,28 @@ public class Aware_Plugin extends Service {
         //Unregister Context Broadcaster
         unregisterReceiver(contextBroadcaster);
 
+        if( aware != null ) stopService(aware);
+
         if(DEBUG) Log.d(TAG, TAG + " plugin terminated...");
     }
     
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        TAG = Aware.getSetting(getApplicationContext(),Aware_Preferences.DEBUG_TAG).length()>0?Aware.getSetting(getApplicationContext(),Aware_Preferences.DEBUG_TAG):TAG;
-        DEBUG = Aware.getSetting(getApplicationContext(), Aware_Preferences.DEBUG_FLAG).equals("true");
-        if(DEBUG) Log.d(TAG, TAG + " plugin active...");
-        return START_STICKY;
+        //Ask the user all required permissions
+        final ArrayList<String> missing = new ArrayList<>();
+        for( String p : REQUIRED_PERMISSIONS ) {
+            int permission_access = ContextCompat.checkSelfPermission(getApplicationContext(), p);
+            if( permission_access != PackageManager.PERMISSION_GRANTED ) {
+                missing.add(p);
+            }
+        }
+        if( missing.size() > 0 ) {
+            Intent permissionRequest = new Intent(this, PermissionsHandler.class);
+            permissionRequest.putExtra( PermissionsHandler.EXTRA_REQUIRED_PERMISSIONS, missing.toArray(new String[missing.size()]) );
+            permissionRequest.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            startActivity(permissionRequest);
+        }
+        return super.onStartCommand(intent, flags, startId);
     }
 
     /**

@@ -1,7 +1,6 @@
 
 package com.aware;
 
-import android.*;
 import android.Manifest;
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -20,9 +19,9 @@ import android.content.pm.PackageManager.NameNotFoundException;
 import android.hardware.Sensor;
 import android.hardware.SensorManager;
 import android.location.LocationManager;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Environment;
 import android.preference.CheckBoxPreference;
 import android.preference.EditTextPreference;
 import android.preference.ListPreference;
@@ -30,6 +29,7 @@ import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceManager;
 import android.preference.PreferenceScreen;
+import android.provider.Settings;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
@@ -39,42 +39,15 @@ import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
-import com.aware.providers.Accelerometer_Provider;
-import com.aware.providers.Applications_Provider;
-import com.aware.providers.Barometer_Provider;
-import com.aware.providers.Battery_Provider;
-import com.aware.providers.Bluetooth_Provider;
-import com.aware.providers.Communication_Provider;
-import com.aware.providers.ESM_Provider;
-import com.aware.providers.Gravity_Provider;
-import com.aware.providers.Gyroscope_Provider;
-import com.aware.providers.Installations_Provider;
-import com.aware.providers.Keyboard_Provider;
-import com.aware.providers.Light_Provider;
-import com.aware.providers.Linear_Accelerometer_Provider;
-import com.aware.providers.Locations_Provider;
-import com.aware.providers.Magnetometer_Provider;
-import com.aware.providers.Mqtt_Provider;
-import com.aware.providers.Network_Provider;
-import com.aware.providers.Processor_Provider;
-import com.aware.providers.Proximity_Provider;
-import com.aware.providers.Rotation_Provider;
-import com.aware.providers.Scheduler_Provider;
-import com.aware.providers.Screen_Provider;
-import com.aware.providers.Telephony_Provider;
-import com.aware.providers.Temperature_Provider;
-import com.aware.providers.TimeZone_Provider;
-import com.aware.providers.Traffic_Provider;
-import com.aware.providers.WiFi_Provider;
 import com.aware.ui.Aware_Activity;
 import com.aware.ui.Plugins_Manager;
+import com.aware.utils.Http;
 import com.aware.utils.Https;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
@@ -119,6 +92,11 @@ public class Aware_Preferences extends Aware_Activity {
      * AWARE Device ID (UUID)
      */
     public static final String DEVICE_ID = "device_id";
+
+    /**
+     * AWARE Group ID, used for assigning clients to a specific research group upon deployment
+     */
+    public static final String GROUP_ID = "group_id";
     
     /**
      * Automatically check for updates on the client
@@ -489,23 +467,16 @@ public class Aware_Preferences extends Aware_Activity {
     public static final String FREQUENCY_CLEAN_OLD_DATA = "frequency_clean_old_data";
 
     /**
-     * Activate/deactivate Android Wear data synching
-     */
-//    public static final String STATUS_ANDROID_WEAR = "status_android_wear";
-
-    /**
      * Activate/deactivate keyboard logging
      */
     public static final String STATUS_KEYBOARD = "status_keyboard";
-
-    private final String AWARE_VERSION = "aware_version";
 
     private static final Aware framework = Aware.getService();
     private static SensorManager mSensorMgr;
     private static Context sContext;
     private static PreferenceActivity sPreferences;
 
-    final private int REQUEST_CODE_WRITE_STORAGE = 999;
+    final private int REQUEST_CODE_PERMISSIONS = 999;
 
     @Override
     protected Dialog onCreateDialog(int id) {
@@ -535,12 +506,6 @@ public class Aware_Preferences extends Aware_Activity {
             break;
         }
         return dialog;
-    }
-
-    private boolean isDirty() {
-        File f = new File(Environment.getExternalStorageDirectory() + "/AWARE");
-        if( f.exists() ) return true;
-        return false;
     }
 
     private void defaultSettings() {
@@ -578,7 +543,7 @@ public class Aware_Preferences extends Aware_Activity {
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if( requestCode == REQUEST_CODE_WRITE_STORAGE ) {
+        if( requestCode == REQUEST_CODE_PERMISSIONS) {
             if( grantResults.length > 0 && grantResults[0] != PackageManager.PERMISSION_GRANTED ) {
                 Toast.makeText(this, "AWARE external storage access required!", Toast.LENGTH_SHORT).show();
                 Intent aware = new Intent( getApplicationContext(), Aware.class );
@@ -605,11 +570,44 @@ public class Aware_Preferences extends Aware_Activity {
         sContext = getApplicationContext();
         sPreferences = this;
 
-        int permissionCheck = ContextCompat.checkSelfPermission(Aware_Preferences.this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
-        if( permissionCheck != PackageManager.PERMISSION_GRANTED ) {
-            if( ! shouldShowRequestPermissionRationale(Manifest.permission.WRITE_EXTERNAL_STORAGE) ) {
-                requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_CODE_WRITE_STORAGE);
-            }
+        int storage = ContextCompat.checkSelfPermission(Aware_Preferences.this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
+        int camera = ContextCompat.checkSelfPermission(Aware_Preferences.this, Manifest.permission.CAMERA);
+        int phone_state = ContextCompat.checkSelfPermission(Aware_Preferences.this, Manifest.permission.READ_PHONE_STATE);
+        int phone_log = ContextCompat.checkSelfPermission(Aware_Preferences.this, Manifest.permission.READ_CALL_LOG);
+        int contacts = ContextCompat.checkSelfPermission(Aware_Preferences.this, Manifest.permission.READ_CONTACTS);
+        int sms = ContextCompat.checkSelfPermission(Aware_Preferences.this, Manifest.permission.READ_SMS);
+        int location_network = ContextCompat.checkSelfPermission(Aware_Preferences.this, Manifest.permission.ACCESS_COARSE_LOCATION);
+        int location_gps = ContextCompat.checkSelfPermission(Aware_Preferences.this, Manifest.permission.ACCESS_FINE_LOCATION);
+
+        ArrayList<String> missing_permissions = new ArrayList<>();
+
+        if( storage != PackageManager.PERMISSION_GRANTED ) {
+            missing_permissions.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);
+        }
+        if( camera != PackageManager.PERMISSION_GRANTED ) {
+            missing_permissions.add(Manifest.permission.CAMERA);
+        }
+        if( phone_state != PackageManager.PERMISSION_GRANTED ) {
+            missing_permissions.add(Manifest.permission.READ_PHONE_STATE);
+        }
+        if( phone_log != PackageManager.PERMISSION_GRANTED ) {
+            missing_permissions.add(Manifest.permission.READ_CALL_LOG);
+        }
+        if( contacts != PackageManager.PERMISSION_GRANTED ) {
+            missing_permissions.add(Manifest.permission.READ_CONTACTS);
+        }
+        if( sms != PackageManager.PERMISSION_GRANTED ) {
+            missing_permissions.add(Manifest.permission.READ_SMS);
+        }
+        if( location_network != PackageManager.PERMISSION_GRANTED ) {
+            missing_permissions.add(Manifest.permission.ACCESS_COARSE_LOCATION);
+        }
+        if( location_gps != PackageManager.PERMISSION_GRANTED) {
+            missing_permissions.add(Manifest.permission.ACCESS_FINE_LOCATION);
+        }
+
+        if( missing_permissions.size() > 0 ) {
+            requestPermissions( missing_permissions.toArray(new String[missing_permissions.size()]), REQUEST_CODE_PERMISSIONS );
         }
 
         //Start the Aware
@@ -626,89 +624,27 @@ public class Aware_Preferences extends Aware_Activity {
 
         Map<String,?> defaults = prefs.getAll();
         for(Map.Entry<String, ?> entry : defaults.entrySet()) {
-            if( Aware.getSetting(getApplicationContext(), entry.getKey()).length() == 0 ) {
-                Aware.setSetting(getApplicationContext(), entry.getKey(), entry.getValue());
+            if( Aware.getSetting(getApplicationContext(), entry.getKey(), "com.aware").length() == 0 ) {
+                Aware.setSetting(getApplicationContext(), entry.getKey(), entry.getValue(), "com.aware");
             }
         }
+
         if( Aware.getSetting(getApplicationContext(), Aware_Preferences.DEVICE_ID).length() == 0 ) {
             UUID uuid = UUID.randomUUID();
             Aware.setSetting(getApplicationContext(), Aware_Preferences.DEVICE_ID, uuid.toString());
+        }
+        if (Aware.getSetting(getApplicationContext(), Aware_Preferences.WEBSERVICE_SERVER).length() == 0) {
+            Aware.setSetting(getApplicationContext(), Aware_Preferences.WEBSERVICE_SERVER, "https://api.awareframework.com/index.php");
         }
 
         addPreferencesFromResource(R.xml.aware_preferences);
         setContentView(R.layout.aware_ui);
 
-        try {
-            PackageInfo awarePkg = getPackageManager().getPackageInfo("com.aware", 0);
-            int aware_version = awarePkg.versionCode;
+        defaultSettings();
 
-            //First time installing, updating AWARE
-            if( ( ! prefs.contains(AWARE_VERSION) && isDirty()) || ( prefs.contains(AWARE_VERSION) && prefs.getInt(AWARE_VERSION, 0) != aware_version ) ) {
-                AlertDialog.Builder builder = new AlertDialog.Builder(Aware_Preferences.this);
-                builder.setMessage(R.string.aware_dirty);
-                builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        defaultSettings();
-                    }
-                });
-                builder.setPositiveButton("Clean", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-
-                        //Reset settings to default
-                        Aware.reset(getApplicationContext());
-
-                        //Reset core ContentProviders
-                        Accelerometer_Provider.resetDB(getApplicationContext());
-                        Applications_Provider.resetDB(getApplicationContext());
-                        Barometer_Provider.resetDB(getApplicationContext());
-                        Battery_Provider.resetDB(getApplicationContext());
-                        Bluetooth_Provider.resetDB(getApplicationContext());
-                        Communication_Provider.resetDB(getApplicationContext());
-                        ESM_Provider.resetDB(getApplicationContext());
-                        Gravity_Provider.resetDB(getApplicationContext());
-                        Gyroscope_Provider.resetDB(getApplicationContext());
-                        Installations_Provider.resetDB(getApplicationContext());
-                        Keyboard_Provider.resetDB(getApplicationContext());
-                        Light_Provider.resetDB(getApplicationContext());
-                        Linear_Accelerometer_Provider.resetDB(getApplicationContext());
-                        Locations_Provider.resetDB(getApplicationContext());
-                        Magnetometer_Provider.resetDB(getApplicationContext());
-                        Mqtt_Provider.resetDB(getApplicationContext());
-                        Network_Provider.resetDB(getApplicationContext());
-                        Processor_Provider.resetDB(getApplicationContext());
-                        Proximity_Provider.resetDB(getApplicationContext());
-                        Rotation_Provider.resetDB(getApplicationContext());
-                        Scheduler_Provider.resetDB(getApplicationContext());
-                        Screen_Provider.resetDB(getApplicationContext());
-                        Telephony_Provider.resetDB(getApplicationContext());
-                        Temperature_Provider.resetDB(getApplicationContext());
-                        TimeZone_Provider.resetDB(getApplicationContext());
-                        Traffic_Provider.resetDB(getApplicationContext());
-                        WiFi_Provider.resetDB(getApplicationContext());
-
-                        //Restart activity
-                        Intent intent = getIntent();
-                        finish();
-                        startActivity(intent);
-                    }
-                });
-                AlertDialog dialog = builder.create();
-                dialog.show();
-
-                prefs.edit().putInt(AWARE_VERSION, aware_version).commit();
-            }
-
-            defaultSettings();
-
-            //Check if AWARE is active on the accessibility services
-            if( ! Aware.is_watch(sContext) ) {
-                Applications.isAccessibilityServiceActive(sContext);
-            }
-
-        } catch (NameNotFoundException e) {
-            e.printStackTrace();
+        //Check if AWARE is active on the accessibility services
+        if( ! Aware.is_watch(sContext) ) {
+            Applications.isAccessibilityServiceActive(sContext);
         }
     }
 
@@ -749,7 +685,6 @@ public class Aware_Preferences extends Aware_Activity {
             mobile_esm.setEnabled(false);
             return;
         }
-
         final CheckBoxPreference esm = (CheckBoxPreference) findPreference(Aware_Preferences.STATUS_ESM);
         esm.setChecked(Aware.getSetting(sContext, Aware_Preferences.STATUS_ESM).equals("true"));
         esm.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
@@ -757,9 +692,11 @@ public class Aware_Preferences extends Aware_Activity {
             public boolean onPreferenceClick(Preference preference) {
                 Aware.setSetting(sContext, Aware_Preferences.STATUS_ESM, esm.isChecked());
                 if(esm.isChecked()) {
-                    framework.startESM();
+                    framework.startESM(sContext);
+                    mobile_esm.setIcon(getResources().getDrawable(R.drawable.ic_action_esm_active));
                 }else {
-                    framework.stopESM();
+                    framework.stopESM(sContext);
+                    mobile_esm.setIcon(getResources().getDrawable(R.drawable.ic_action_esm));
                 }
                 return true;
             }
@@ -794,9 +731,11 @@ public class Aware_Preferences extends Aware_Activity {
 
                 Aware.setSetting( sContext, Aware_Preferences.STATUS_TEMPERATURE, temperature.isChecked());
                 if( temperature.isChecked() ) {
-                    framework.startTemperature();
+                    framework.startTemperature(sContext);
+                    temp_pref.setIcon(getResources().getDrawable(R.drawable.ic_action_temperature_active));
                 }else {
-                    framework.stopTemperature();
+                    framework.stopTemperature(sContext);
+                    temp_pref.setIcon(getResources().getDrawable(R.drawable.ic_action_temperature));
                 }
                 return true;
             }
@@ -813,7 +752,7 @@ public class Aware_Preferences extends Aware_Activity {
             public boolean onPreferenceChange(Preference preference, Object newValue) {
                 Aware.setSetting(sContext, FREQUENCY_TEMPERATURE, (String) newValue);
                 frequency_temperature.setSummary((String) newValue);
-                framework.startTemperature();
+                framework.startTemperature(sContext);
                 return true;
             }
         });
@@ -849,9 +788,11 @@ public class Aware_Preferences extends Aware_Activity {
 
                 Aware.setSetting(sContext, Aware_Preferences.STATUS_ACCELEROMETER, accelerometer.isChecked());
                 if(accelerometer.isChecked()) {
-                    framework.startAccelerometer();
+                    framework.startAccelerometer(sContext);
+                    accel_pref.setIcon(getResources().getDrawable(R.drawable.ic_action_accelerometer_active));
                 }else {
-                    framework.stopAccelerometer();
+                    framework.stopAccelerometer(sContext);
+                    accel_pref.setIcon(getResources().getDrawable(R.drawable.ic_action_accelerometer));
                 }
                 return true;
             }
@@ -868,7 +809,7 @@ public class Aware_Preferences extends Aware_Activity {
             public boolean onPreferenceChange(Preference preference, Object newValue) {
                 Aware.setSetting(sContext,FREQUENCY_ACCELEROMETER, (String) newValue);
                 frequency_accelerometer.setSummary( (String)newValue);
-                framework.startAccelerometer();
+                framework.startAccelerometer(sContext);
                 return true;
             }
         });
@@ -903,9 +844,11 @@ public class Aware_Preferences extends Aware_Activity {
                 }
                 Aware.setSetting(sContext, Aware_Preferences.STATUS_LINEAR_ACCELEROMETER, linear_accelerometer.isChecked());
                 if (linear_accelerometer.isChecked()) {
-                    framework.startLinearAccelerometer();
+                    framework.startLinearAccelerometer(sContext);
+                    linear_pref.setIcon(getResources().getDrawable(R.drawable.ic_action_linear_acceleration_active));
                 } else {
-                    framework.stopLinearAccelerometer();
+                    framework.stopLinearAccelerometer(sContext);
+                    linear_pref.setIcon(getResources().getDrawable(R.drawable.ic_action_linear_acceleration_active));
                 }
                 return true;
             }
@@ -922,7 +865,7 @@ public class Aware_Preferences extends Aware_Activity {
             public boolean onPreferenceChange(Preference preference, Object newValue) {
                 Aware.setSetting(sContext, FREQUENCY_LINEAR_ACCELEROMETER, (String) newValue);
                 frequency_linear_accelerometer.setSummary((String) newValue);
-                framework.startLinearAccelerometer();
+                framework.startLinearAccelerometer(sContext);
                 return true;
             }
         });
@@ -932,6 +875,7 @@ public class Aware_Preferences extends Aware_Activity {
      * Applications module settings UI
      */
     private void applications() {
+        final PreferenceScreen apps_pref = (PreferenceScreen) findPreference("applications");
         final CheckBoxPreference notifications = (CheckBoxPreference) findPreference(Aware_Preferences.STATUS_NOTIFICATIONS);
         notifications.setChecked(Aware.getSetting(sContext, Aware_Preferences.STATUS_NOTIFICATIONS).equals("true"));
         notifications.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
@@ -940,7 +884,8 @@ public class Aware_Preferences extends Aware_Activity {
                 if( Applications.isAccessibilityServiceActive(sContext) && notifications.isChecked() ) {
                     Aware.setSetting(sContext, Aware_Preferences.STATUS_NOTIFICATIONS, notifications.isChecked());
                     notifications.setChecked(true);
-                    framework.startApplications();
+                    framework.startApplications(sContext);
+                    apps_pref.setIcon(getResources().getDrawable(R.drawable.ic_action_applications_active));
                     return true;
                 }
                 Applications.isAccessibilityServiceActive(sContext);
@@ -957,14 +902,15 @@ public class Aware_Preferences extends Aware_Activity {
                 if( Applications.isAccessibilityServiceActive(sContext) && keyboard.isChecked() ) {
                     Aware.setSetting(sContext, Aware_Preferences.STATUS_KEYBOARD, keyboard.isChecked());
                     keyboard.setChecked(true);
-                    framework.startApplications();
-                    framework.startKeyboard();
+                    framework.startApplications(sContext);
+                    framework.startKeyboard(sContext);
+                    apps_pref.setIcon(getResources().getDrawable(R.drawable.ic_action_applications_active));
                     return true;
                 }
                 Applications.isAccessibilityServiceActive(sContext);
                 Aware.setSetting(sContext, Aware_Preferences.STATUS_KEYBOARD, false);
                 keyboard.setChecked(false);
-                framework.stopKeyboard();
+                framework.stopKeyboard(sContext);
                 return false;
             }
         });
@@ -976,7 +922,8 @@ public class Aware_Preferences extends Aware_Activity {
                 if( Applications.isAccessibilityServiceActive(sContext) && crashes.isChecked() ) {
                     Aware.setSetting(sContext, Aware_Preferences.STATUS_CRASHES, crashes.isChecked());
                     crashes.setChecked(true);
-                    framework.startApplications();
+                    framework.startApplications(sContext);
+                    apps_pref.setIcon(getResources().getDrawable(R.drawable.ic_action_applications_active));
                     return true;
                 }
                 Applications.isAccessibilityServiceActive(sContext);
@@ -988,7 +935,8 @@ public class Aware_Preferences extends Aware_Activity {
         final CheckBoxPreference applications = (CheckBoxPreference) findPreference(Aware_Preferences.STATUS_APPLICATIONS);
         if( Aware.getSetting(sContext, Aware_Preferences.STATUS_APPLICATIONS).equals("true") && ! Applications.isAccessibilityServiceActive(sContext) ) {
             Aware.setSetting(sContext, Aware_Preferences.STATUS_APPLICATIONS, false );
-            framework.stopApplications();
+            framework.stopApplications(sContext);
+            apps_pref.setIcon(getResources().getDrawable(R.drawable.ic_action_applications));
         }
         applications.setChecked(Aware.getSetting(sContext, Aware_Preferences.STATUS_APPLICATIONS).equals("true"));
         applications.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
@@ -997,7 +945,8 @@ public class Aware_Preferences extends Aware_Activity {
                 if( Applications.isAccessibilityServiceActive(sContext) && applications.isChecked() ) {
                     Aware.setSetting(sContext, Aware_Preferences.STATUS_APPLICATIONS, true);
                     applications.setChecked(true);
-                    framework.startApplications();
+                    framework.startApplications(sContext);
+                    apps_pref.setIcon(getResources().getDrawable(R.drawable.ic_action_applications_active));
                     return true;
                 }else {
                     Applications.isAccessibilityServiceActive(sContext);
@@ -1011,7 +960,8 @@ public class Aware_Preferences extends Aware_Activity {
                     Aware.setSetting(sContext, Aware_Preferences.STATUS_CRASHES, false);
                     crashes.setChecked(false);
 
-                    framework.stopApplications();
+                    framework.stopApplications(sContext);
+                    apps_pref.setIcon(getResources().getDrawable(R.drawable.ic_action_applications));
                     return false;
                 }
             }
@@ -1027,7 +977,7 @@ public class Aware_Preferences extends Aware_Activity {
             public boolean onPreferenceChange(Preference preference, Object newValue) {
                 Aware.setSetting(sContext, Aware_Preferences.FREQUENCY_APPLICATIONS, (String) newValue);
                 frequency_applications.setSummary((String) newValue + " seconds");
-                framework.startApplications();
+                framework.startApplications(sContext);
                 return true;
             }
         });
@@ -1039,9 +989,11 @@ public class Aware_Preferences extends Aware_Activity {
             public boolean onPreferenceClick(Preference preference) {
                 Aware.setSetting(sContext, Aware_Preferences.STATUS_INSTALLATIONS, installations.isChecked());
                 if (installations.isChecked()) {
-                    framework.startInstallations();
+                    framework.startInstallations(sContext);
+                    apps_pref.setIcon(getResources().getDrawable(R.drawable.ic_action_applications_active));
                 } else {
-                    framework.stopInstallations();
+                    framework.stopInstallations(sContext);
+                    apps_pref.setIcon(getResources().getDrawable(R.drawable.ic_action_applications));
                 }
                 return true;
             }
@@ -1059,9 +1011,9 @@ public class Aware_Preferences extends Aware_Activity {
             public boolean onPreferenceClick(Preference preference) {
                 Aware.setSetting(sContext,Aware_Preferences.STATUS_BATTERY, battery.isChecked());
                 if(battery.isChecked()) {
-                    framework.startBattery();
+                    framework.startBattery(sContext);
                 }else {
-                    framework.stopBattery();
+                    framework.stopBattery(sContext);
                 }
                 return true;
             }
@@ -1087,9 +1039,9 @@ public class Aware_Preferences extends Aware_Activity {
 
                 Aware.setSetting(sContext,Aware_Preferences.STATUS_BLUETOOTH, bluetooth.isChecked());
                 if(bluetooth.isChecked()) {
-                    framework.startBluetooth();
+                    framework.startBluetooth(sContext);
                 }else {
-                    framework.stopBluetooth();
+                    framework.stopBluetooth(sContext);
                 }
                 return true;
             }
@@ -1105,7 +1057,7 @@ public class Aware_Preferences extends Aware_Activity {
             public boolean onPreferenceChange(Preference preference, Object newValue) {
                 Aware.setSetting(sContext, Aware_Preferences.FREQUENCY_BLUETOOTH, (String) newValue);
                 bluetoothInterval.setSummary((String) newValue + " seconds");
-                framework.startBluetooth();
+                framework.startBluetooth(sContext);
                 return true;
             }
         });
@@ -1128,9 +1080,9 @@ public class Aware_Preferences extends Aware_Activity {
             public boolean onPreferenceClick(Preference preference) {
                 Aware.setSetting(sContext, Aware_Preferences.STATUS_CALLS, calls.isChecked());
                 if(calls.isChecked()) {
-                    framework.startCommunication();
+                    framework.startCommunication(sContext);
                 } else {
-                    framework.stopCommunication();
+                    framework.stopCommunication(sContext);
                 }
                 return true;
             }
@@ -1143,9 +1095,9 @@ public class Aware_Preferences extends Aware_Activity {
             public boolean onPreferenceClick(Preference preference) {
                 Aware.setSetting(sContext,Aware_Preferences.STATUS_MESSAGES, messages.isChecked());
                 if(messages.isChecked()) {
-                    framework.startCommunication();
+                    framework.startCommunication(sContext);
                 } else {
-                    framework.stopCommunication();
+                    framework.stopCommunication(sContext);
                 }
                 return true;
             }
@@ -1158,9 +1110,9 @@ public class Aware_Preferences extends Aware_Activity {
             public boolean onPreferenceClick(Preference preference) {
                 Aware.setSetting(sContext, Aware_Preferences.STATUS_COMMUNICATION_EVENTS, communication.isChecked());
                 if (communication.isChecked()) {
-                    framework.startCommunication();
+                    framework.startCommunication(sContext);
                 } else {
-                    framework.stopCommunication();
+                    framework.stopCommunication(sContext);
                 }
                 return true;
             }
@@ -1195,9 +1147,9 @@ public class Aware_Preferences extends Aware_Activity {
                 }
                 Aware.setSetting(sContext,Aware_Preferences.STATUS_GRAVITY, gravity.isChecked());
                 if(gravity.isChecked()) {
-                    framework.startGravity();
+                    framework.startGravity(sContext);
                 }else {
-                    framework.stopGravity();
+                    framework.stopGravity(sContext);
                 }
                 return true;
             }
@@ -1214,7 +1166,7 @@ public class Aware_Preferences extends Aware_Activity {
             public boolean onPreferenceChange(Preference preference, Object newValue) {
                 Aware.setSetting(sContext, FREQUENCY_GRAVITY, (String) newValue);
                 frequency_gravity.setSummary((String) newValue);
-                framework.startGravity();
+                framework.startGravity(sContext);
                 return true;
             }
         });
@@ -1248,9 +1200,9 @@ public class Aware_Preferences extends Aware_Activity {
                 }
                 Aware.setSetting(sContext,Aware_Preferences.STATUS_GYROSCOPE, gyroscope.isChecked());
                 if(gyroscope.isChecked()) {
-                    framework.startGyroscope();
+                    framework.startGyroscope(sContext);
                 }else {
-                    framework.stopGyroscope();
+                    framework.stopGyroscope(sContext);
                 }
                 return true;
             }
@@ -1267,7 +1219,7 @@ public class Aware_Preferences extends Aware_Activity {
             public boolean onPreferenceChange(Preference preference, Object newValue) {
                 Aware.setSetting(sContext,FREQUENCY_GYROSCOPE, (String) newValue);
                 frequency_gyroscope.setSummary( (String)newValue);
-                framework.startGyroscope();
+                framework.startGyroscope(sContext);
                 return true;
             }
         });
@@ -1301,9 +1253,9 @@ public class Aware_Preferences extends Aware_Activity {
 
                 Aware.setSetting(sContext, Aware_Preferences.STATUS_LOCATION_GPS,location_gps.isChecked());
                 if(location_gps.isChecked()) {
-                    framework.startLocations();
+                    framework.startLocations(sContext);
                 }else {
-                    framework.stopLocations();
+                    framework.stopLocations(sContext);
                 }
                 return true;
             }
@@ -1327,9 +1279,9 @@ public class Aware_Preferences extends Aware_Activity {
 
                 Aware.setSetting(sContext,Aware_Preferences.STATUS_LOCATION_NETWORK, location_network.isChecked());
                 if(location_network.isChecked()) {
-                    framework.startLocations();
+                    framework.startLocations(sContext);
                 }else {
-                    framework.stopLocations();
+                    framework.stopLocations(sContext);
                 }
                 return true;
             }
@@ -1345,7 +1297,7 @@ public class Aware_Preferences extends Aware_Activity {
             public boolean onPreferenceChange(Preference preference, Object newValue) {
                 Aware.setSetting(sContext,Aware_Preferences.FREQUENCY_LOCATION_GPS, (String) newValue);
                 gpsInterval.setSummary((String) newValue + " seconds");
-                framework.startLocations();
+                framework.startLocations(sContext);
                 return true;
             }
         });
@@ -1360,7 +1312,7 @@ public class Aware_Preferences extends Aware_Activity {
             public boolean onPreferenceChange(Preference preference, Object newValue) {
                 Aware.setSetting(sContext,Aware_Preferences.FREQUENCY_LOCATION_NETWORK, (String) newValue);
                 networkInterval.setSummary((String) newValue + " seconds");
-                framework.startLocations();
+                framework.startLocations(sContext);
                 return true;
             }
         });
@@ -1375,7 +1327,7 @@ public class Aware_Preferences extends Aware_Activity {
             public boolean onPreferenceChange(Preference preference, Object newValue) {
                 Aware.setSetting(sContext, Aware_Preferences.MIN_LOCATION_GPS_ACCURACY, (String) newValue);
                 gpsAccuracy.setSummary((String) newValue + " meters");
-                framework.startLocations();
+                framework.startLocations(sContext);
                 return true;
             }
         });
@@ -1390,7 +1342,7 @@ public class Aware_Preferences extends Aware_Activity {
             public boolean onPreferenceChange(Preference preference, Object newValue) {
                 Aware.setSetting(sContext,Aware_Preferences.MIN_LOCATION_NETWORK_ACCURACY, (String) newValue);
                 networkAccuracy.setSummary((String) newValue + " meters");
-                framework.startLocations();
+                framework.startLocations(sContext);
                 return true;
             }
         });
@@ -1405,7 +1357,7 @@ public class Aware_Preferences extends Aware_Activity {
             public boolean onPreferenceChange(Preference preference, Object newValue) {
                 Aware.setSetting(sContext, Aware_Preferences.LOCATION_EXPIRATION_TIME, (String) newValue);
                 expirateTime.setSummary((String) newValue + " seconds");
-                framework.startLocations();
+                framework.startLocations(sContext);
                 return true;
             }
         });
@@ -1428,9 +1380,9 @@ public class Aware_Preferences extends Aware_Activity {
             public boolean onPreferenceClick(Preference preference) {
                 Aware.setSetting(sContext, Aware_Preferences.STATUS_NETWORK_TRAFFIC,network_traffic.isChecked());
                 if(network_traffic.isChecked()) {
-                    framework.startTraffic();
+                    framework.startTraffic(sContext);
                 }else {
-                    framework.stopTraffic();
+                    framework.stopTraffic(sContext);
                 }
                 return true;
             }
@@ -1447,7 +1399,7 @@ public class Aware_Preferences extends Aware_Activity {
                 Aware.setSetting(sContext, Aware_Preferences.FREQUENCY_NETWORK_TRAFFIC, (String) newValue);
                 frequencyTraffic.setSummary((String) newValue + " seconds");
                 if( network_traffic.isChecked() ) {
-                    framework.startTraffic();
+                    framework.startTraffic(sContext);
                 }
                 return true;
             }
@@ -1460,9 +1412,9 @@ public class Aware_Preferences extends Aware_Activity {
             public boolean onPreferenceClick(Preference preference) {
                 Aware.setSetting(sContext, Aware_Preferences.STATUS_NETWORK_EVENTS,network.isChecked());
                 if(network.isChecked()) {
-                    framework.startNetwork();
+                    framework.startNetwork(sContext);
                 }else {
-                    framework.stopNetwork();
+                    framework.stopNetwork(sContext);
                 }
                 return true;
             }
@@ -1480,9 +1432,9 @@ public class Aware_Preferences extends Aware_Activity {
             public boolean onPreferenceClick(Preference preference) {
                 Aware.setSetting(sContext, Aware_Preferences.STATUS_SCREEN, screen.isChecked());
                 if (screen.isChecked()) {
-                    framework.startScreen();
+                    framework.startScreen(sContext);
                 } else {
-                    framework.stopScreen();
+                    framework.stopScreen(sContext);
                 }
                 return true;
             }
@@ -1506,9 +1458,9 @@ public class Aware_Preferences extends Aware_Activity {
             public boolean onPreferenceClick(Preference preference) {
                 Aware.setSetting(sContext,Aware_Preferences.STATUS_WIFI,wifi.isChecked());
                 if(wifi.isChecked()) {
-                    framework.startWiFi();
+                    framework.startWiFi(sContext);
                 }else {
-                    framework.stopWiFi();
+                    framework.stopWiFi(sContext);
                 }
                 return true;
             }
@@ -1524,7 +1476,7 @@ public class Aware_Preferences extends Aware_Activity {
             public boolean onPreferenceChange(Preference preference, Object newValue) {
                 Aware.setSetting(sContext, Aware_Preferences.FREQUENCY_WIFI, (String) newValue);
                 wifiInterval.setSummary((String) newValue + " seconds");
-                framework.startWiFi();
+                framework.startWiFi(sContext);
                 return true;
             }
         });
@@ -1541,9 +1493,9 @@ public class Aware_Preferences extends Aware_Activity {
             public boolean onPreferenceClick(Preference preference) {
                 Aware.setSetting(sContext, Aware_Preferences.STATUS_PROCESSOR, processor.isChecked());
                 if(processor.isChecked()) {
-                    framework.startProcessor();
+                    framework.startProcessor(sContext);
                 }else {
-                    framework.stopProcessor();
+                    framework.stopProcessor(sContext);
                 }
                 return true;
             }
@@ -1559,7 +1511,7 @@ public class Aware_Preferences extends Aware_Activity {
             public boolean onPreferenceChange(Preference preference, Object newValue) {
                 Aware.setSetting(sContext,Aware_Preferences.FREQUENCY_PROCESSOR, (String) newValue);
                 frequencyProcessor.setSummary((String) newValue + " seconds");
-                framework.startProcessor();
+                framework.startProcessor(sContext);
                 return true;
             }
         });
@@ -1582,9 +1534,9 @@ public class Aware_Preferences extends Aware_Activity {
             public boolean onPreferenceClick(Preference preference) {
                 Aware.setSetting(sContext, Aware_Preferences.STATUS_TIMEZONE,timeZone.isChecked());
                 if(timeZone.isChecked()) {
-                    framework.startTimeZone();
+                    framework.startTimeZone(sContext);
                 }else {
-                    framework.stopTimeZone();
+                    framework.stopTimeZone(sContext);
                 }
                 return true;
             }
@@ -1600,7 +1552,7 @@ public class Aware_Preferences extends Aware_Activity {
             public boolean onPreferenceChange(Preference preference, Object newValue) {
                 Aware.setSetting(sContext, Aware_Preferences.FREQUENCY_TIMEZONE, (String) newValue);
                 frequencyTimeZone.setSummary((String) newValue + " seconds");
-                framework.startTimeZone();
+                framework.startTimeZone(sContext);
                 return true;
             }
         });
@@ -1635,9 +1587,9 @@ public class Aware_Preferences extends Aware_Activity {
 
                 Aware.setSetting(sContext,Aware_Preferences.STATUS_LIGHT, light.isChecked());
                 if(light.isChecked()) {
-                    framework.startLight();
+                    framework.startLight(sContext);
                 }else {
-                    framework.stopLight();
+                    framework.stopLight(sContext);
                 }
                 return true;
             }
@@ -1654,7 +1606,7 @@ public class Aware_Preferences extends Aware_Activity {
             public boolean onPreferenceChange(Preference preference, Object newValue) {
                 Aware.setSetting(sContext,FREQUENCY_LIGHT, (String) newValue);
                 frequency_light.setSummary( (String)newValue);
-                framework.startLight();
+                framework.startLight(sContext);
                 return true;
             }
         });
@@ -1689,9 +1641,9 @@ public class Aware_Preferences extends Aware_Activity {
 
                 Aware.setSetting(sContext, Aware_Preferences.STATUS_MAGNETOMETER, magnetometer.isChecked());
                 if(magnetometer.isChecked()) {
-                    framework.startMagnetometer();
+                    framework.startMagnetometer(sContext);
                 }else {
-                    framework.stopMagnetometer();
+                    framework.stopMagnetometer(sContext);
                 }
                 return true;
             }
@@ -1708,7 +1660,7 @@ public class Aware_Preferences extends Aware_Activity {
             public boolean onPreferenceChange(Preference preference, Object newValue) {
                 Aware.setSetting(sContext,FREQUENCY_MAGNETOMETER, (String) newValue);
                 frequency_magnetometer.setSummary( (String)newValue);
-                framework.startMagnetometer();
+                framework.startMagnetometer(sContext);
                 return true;
             }
         });
@@ -1743,9 +1695,9 @@ public class Aware_Preferences extends Aware_Activity {
 
                 Aware.setSetting(sContext, Aware_Preferences.STATUS_BAROMETER, pressure.isChecked());
                 if(pressure.isChecked()) {
-                    framework.startBarometer();
+                    framework.startBarometer(sContext);
                 }else {
-                    framework.stopBarometer();
+                    framework.stopBarometer(sContext);
                 }
                 return true;
             }
@@ -1762,7 +1714,7 @@ public class Aware_Preferences extends Aware_Activity {
             public boolean onPreferenceChange(Preference preference, Object newValue) {
                 Aware.setSetting(sContext,FREQUENCY_BAROMETER, (String) newValue);
                 frequency_pressure.setSummary( (String)newValue);
-                framework.startBarometer();
+                framework.startBarometer(sContext);
                 return true;
             }
         });
@@ -1798,9 +1750,9 @@ public class Aware_Preferences extends Aware_Activity {
 
                 Aware.setSetting(sContext, Aware_Preferences.STATUS_PROXIMITY, proximity.isChecked());
                 if(proximity.isChecked()) {
-                    framework.startProximity();
+                    framework.startProximity(sContext);
                 }else {
-                    framework.stopProximity();
+                    framework.stopProximity(sContext);
                 }
                 return true;
             }
@@ -1817,7 +1769,7 @@ public class Aware_Preferences extends Aware_Activity {
             public boolean onPreferenceChange(Preference preference, Object newValue) {
                 Aware.setSetting(sContext,FREQUENCY_PROXIMITY, (String) newValue);
                 frequency_proximity.setSummary( (String)newValue);
-                framework.startProximity();
+                framework.startProximity(sContext);
                 return true;
             }
         });
@@ -1852,9 +1804,9 @@ public class Aware_Preferences extends Aware_Activity {
 
                 Aware.setSetting(sContext,Aware_Preferences.STATUS_ROTATION, rotation.isChecked());
                 if(rotation.isChecked()) {
-                    framework.startRotation();
+                    framework.startRotation(sContext);
                 }else {
-                    framework.stopRotation();
+                    framework.stopRotation(sContext);
                 }
                 return true;
             }
@@ -1871,7 +1823,7 @@ public class Aware_Preferences extends Aware_Activity {
             public boolean onPreferenceChange(Preference preference, Object newValue) {
                 Aware.setSetting(sContext, FREQUENCY_ROTATION, (String) newValue);
                 frequency_rotation.setSummary((String) newValue);
-                framework.startRotation();
+                framework.startRotation(sContext);
                 return true;
             }
         });
@@ -1893,9 +1845,9 @@ public class Aware_Preferences extends Aware_Activity {
             public boolean onPreferenceClick(Preference preference) {
                 Aware.setSetting(sContext, Aware_Preferences.STATUS_TELEPHONY, telephony.isChecked());
                 if (telephony.isChecked()) {
-                    framework.startTelephony();
+                    framework.startTelephony(sContext);
                 } else {
-                    framework.stopTelephony();
+                    framework.stopTelephony(sContext);
                 }
                 return true;
             }
@@ -1929,7 +1881,6 @@ public class Aware_Preferences extends Aware_Activity {
                     Aware.setSetting(sContext, Aware_Preferences.STATUS_WEBSERVICE, webservice.isChecked());
                     if( webservice.isChecked() && Aware.getSetting(sContext, WEBSERVICE_SERVER).length() > 0 ) {
                         //setup and send data
-                        //TODO: Question 1
                         Intent study_config = new Intent(sContext, StudyConfig.class);
                         study_config.putExtra("study_url", Aware.getSetting(sContext, WEBSERVICE_SERVER));
                         sContext.startService(study_config);
@@ -2023,9 +1974,9 @@ public class Aware_Preferences extends Aware_Activity {
                 } else {
                     Aware.setSetting(sContext, Aware_Preferences.STATUS_MQTT, mqtt.isChecked());
                     if(mqtt.isChecked()) {
-                        framework.startMQTT();
+                        framework.startMQTT(sContext);
                     }else {
-                        framework.stopMQTT();
+                        framework.stopMQTT(sContext);
                     }
                     return true;
                 }
@@ -2173,7 +2124,7 @@ public class Aware_Preferences extends Aware_Activity {
         debug_db_slow.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
             @Override
             public boolean onPreferenceClick(Preference preference) {
-                Aware.setSetting(sContext,Aware_Preferences.DEBUG_DB_SLOW, debug_db_slow.isChecked());
+                Aware.setSetting(sContext, Aware_Preferences.DEBUG_DB_SLOW, debug_db_slow.isChecked());
                 return true;
             }
         });
@@ -2186,6 +2137,18 @@ public class Aware_Preferences extends Aware_Activity {
             public boolean onPreferenceChange(Preference preference, Object newValue) {
                 Aware.setSetting(sContext, Aware_Preferences.DEVICE_ID, (String) newValue);
                 device_id.setSummary("UUID: " + Aware.getSetting(sContext, Aware_Preferences.DEVICE_ID));
+                return true;
+            }
+        });
+
+        final EditTextPreference group_id = (EditTextPreference) findPreference(Aware_Preferences.GROUP_ID);
+        group_id.setSummary("Group: " + Aware.getSetting(sContext, GROUP_ID));
+        group_id.setText(Aware.getSetting(sContext, Aware_Preferences.GROUP_ID));
+        group_id.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+            @Override
+            public boolean onPreferenceChange(Preference preference, Object newValue) {
+                Aware.setSetting(sContext, Aware_Preferences.GROUP_ID, (String) newValue);
+                group_id.setSummary("Group: " + Aware.getSetting(sContext, Aware_Preferences.GROUP_ID));
                 return true;
             }
         });
@@ -2304,6 +2267,9 @@ public class Aware_Preferences extends Aware_Activity {
         //Send data to server
         Intent sync = new Intent(Aware.ACTION_AWARE_SYNC_DATA);
         context.sendBroadcast(sync);
+
+        Intent applyNew = new Intent(Aware.ACTION_AWARE_REFRESH);
+        context.sendBroadcast(applyNew);
     }
 
     public static class CheckPlugins extends AsyncTask<ArrayList<String>, Void, Void> {
@@ -2316,9 +2282,20 @@ public class Aware_Preferences extends Aware_Activity {
 
         @Override
         protected Void doInBackground(ArrayList<String>... params) {
+
+            String study_url = Aware.getSetting(context, Aware_Preferences.WEBSERVICE_SERVER);
+            String study_host = study_url.substring(0, study_url.indexOf("/index.php"));
+            String protocol = study_url.substring(0, study_url.indexOf(":"));
+
             for( final String package_name : params[0] ) {
 
-                String http_request = new Https(context).dataGET("https://api.awareframework.com/index.php/plugins/get_plugin/" + package_name, true);
+                String http_request;
+                if( protocol.equals("https") ) {
+                    http_request = new Https(context, context.getResources().openRawResource(R.raw.awareframework)).dataGET( study_host + "/index.php/plugins/get_plugin/" + package_name, true);
+                } else {
+                    http_request = new Http(context).dataGET( study_host + "/index.php/plugins/get_plugin/" + package_name, true);
+                }
+
                 if( http_request != null ) {
                     try {
                         if( ! http_request.equals("[]") ) {
@@ -2373,53 +2350,97 @@ public class Aware_Preferences extends Aware_Activity {
 		@Override
     	protected void onHandleIntent(Intent intent) {
 			String study_url = intent.getStringExtra(EXTRA_JOIN_STUDY);
-            boolean is_join_study = intent.getBooleanExtra("is_join_study",false);
+            boolean is_join_study = intent.getBooleanExtra("is_join_study", false);
 			
 			if( Aware.DEBUG ) Log.d(Aware.TAG, "Joining: " + study_url);
-			
-			if( study_url.startsWith("https://api.awareframework.com/") ) {
-
-				//Request study settings
-                Hashtable<String, String> data = new Hashtable<>();
-                data.put(Aware_Preferences.DEVICE_ID, Aware.getSetting(getApplicationContext(), Aware_Preferences.DEVICE_ID));
-				String answer = new Https(getApplicationContext()).dataPOST(study_url, data, true);
-				try {
-                    JSONArray configs_study = new JSONArray(answer);
-					if( configs_study.getJSONObject(0).has("message") ) {
-                        Toast.makeText(getApplicationContext(), "This study is no longer available.", Toast.LENGTH_LONG).show();
-                        return;
-                    }
-                    //TODO: Remove notification from this part
-                    if(is_join_study)
-                    {
-                        Intent joinIntent = new Intent(getApplicationContext(), ATest.class);
-                        joinIntent.putExtra("configs_study",configs_study.toString());
-                        startActivity(joinIntent);
-                    }
-                    else
-                    {
-                        NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(getApplicationContext());
-                        mBuilder.setSmallIcon(R.drawable.ic_action_aware_studies);
-                        mBuilder.setContentTitle("AWARE");
-                        mBuilder.setContentText("Thanks for joining the study!");
-                        mBuilder.setAutoCancel(true);
-
-                        NotificationManager notManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-                        notManager.notify(33, mBuilder.build());
-
-                        //TODO: apply settings change
-                        //Apply new configurations in AWARE Client
-                        applySettings(getApplicationContext(), configs_study, is_join_study);
-                    }
-
-					if( Aware.DEBUG ) Log.d(Aware.TAG, "Study configs: " + configs_study.toString(5));
 
 
+                
+                //TODO - Scythe
 
-				} catch (JSONException e) {
-					e.printStackTrace();
-				}
-          	}
+//                //Request study settings
+//                Hashtable<String, String> data = new Hashtable<>();
+//                data.put(Aware_Preferences.DEVICE_ID, Aware.getSetting(getApplicationContext(), Aware_Preferences.DEVICE_ID));
+//                String answer = new Https(getApplicationContext()).dataPOST(study_url, data, true);
+//                try {
+//                    JSONArray configs_study = new JSONArray(answer);
+//                    if( configs_study.getJSONObject(0).has("message") ) {
+//                        Toast.makeText(getApplicationContext(), "This study is no longer available.", Toast.LENGTH_LONG).show();
+//                        return;
+//                    }
+//                    //TODO: Remove notification from this part
+//                    if(is_join_study)
+//                    {
+//                        Intent joinIntent = new Intent(getApplicationContext(), ATest.class);
+//                        joinIntent.putExtra("configs_study",configs_study.toString());
+//                        startActivity(joinIntent);
+//                    }
+//                    else
+//                    {
+//                        NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(getApplicationContext());
+//                        mBuilder.setSmallIcon(R.drawable.ic_action_aware_studies);
+//                        mBuilder.setContentTitle("AWARE");
+//                        mBuilder.setContentText("Thanks for joining the study!");
+//                        mBuilder.setAutoCancel(true);
+//
+//                        NotificationManager notManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+//                        notManager.notify(33, mBuilder.build());
+//
+//                        //TODO: apply settings change
+//                        //Apply new configurations in AWARE Client
+//                        applySettings(getApplicationContext(), configs_study, is_join_study);
+//                    }
+//
+//                    if( Aware.DEBUG ) Log.d(Aware.TAG, "Study configs: " + configs_study.toString(5));
+//
+//
+//
+//            } catch (JSONException e) {
+//                e.printStackTrace();
+//            }
+
+
+                    //Request study settings
+            Hashtable<String, String> data = new Hashtable<>();
+            data.put(Aware_Preferences.DEVICE_ID, Aware.getSetting(getApplicationContext(), Aware_Preferences.DEVICE_ID));
+
+            String protocol = study_url.substring(0, study_url.indexOf(":"));
+            String answer;
+            if( protocol.equals("https") ) {
+                answer = new Https(getApplicationContext(), getResources().openRawResource(R.raw.awareframework)).dataPOST(study_url, data, true);
+            } else {
+                answer = new Http(getApplicationContext()).dataPOST(study_url, data, true);
+            }
+
+            if( answer == null ) {
+                Toast.makeText(getApplicationContext(), "Failed to connect to server... try again.", Toast.LENGTH_LONG).show();
+                return;
+            }
+
+            try {
+                JSONArray configs_study = new JSONArray(answer);
+                if( configs_study.getJSONObject(0).has("message") ) {
+                    Toast.makeText(getApplicationContext(), "This study is no longer available.", Toast.LENGTH_LONG).show();
+                    return;
+                }
+
+                NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(getApplicationContext());
+                mBuilder.setSmallIcon(R.drawable.ic_action_aware_studies);
+                mBuilder.setContentTitle("AWARE");
+                mBuilder.setContentText("Thanks for joining the study!");
+                mBuilder.setAutoCancel(true);
+
+                NotificationManager notManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+                notManager.notify(33, mBuilder.build());
+
+                if( Aware.DEBUG ) Log.d(Aware.TAG, "Study configs: " + configs_study.toString(5));
+
+                //Apply new configurations in AWARE Client
+                applySettings( getApplicationContext(), configs_study, is_join_study );
+
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
     	}
     }
 }

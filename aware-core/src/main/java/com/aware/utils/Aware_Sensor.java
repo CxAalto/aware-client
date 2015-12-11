@@ -1,19 +1,24 @@
 
 package com.aware.utils;
 
+import java.util.ArrayList;
 import java.util.Calendar;
 
+import android.Manifest;
 import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.IBinder;
+import android.support.v4.content.ContextCompat;
 import android.util.Log;
 
 import com.aware.Aware;
 import com.aware.Aware_Preferences;
+import com.aware.ui.PermissionsHandler;
 
 /**
  * Aware_Sensor: Extend to integrate with the framework (extension of Android Service class).
@@ -48,6 +53,11 @@ public class Aware_Sensor extends Service {
 	 * Context Providers URIs
 	 */
 	public Uri[] CONTEXT_URIS = null;
+
+    /**
+     * Permissions needed for this plugin to run
+     */
+    public ArrayList<String> REQUIRED_PERMISSIONS = new ArrayList<>();
 	
 	/**
 	 * Sensor is inactive
@@ -58,7 +68,7 @@ public class Aware_Sensor extends Service {
 	 * Sensor is active
 	 */
 	public static final int STATUS_SENSOR_ON = 1;
-	
+
 	/**
      * Interface to share context with other applications/addons<br/>
      * You MUST broadcast your contexts here!
@@ -85,6 +95,8 @@ public class Aware_Sensor extends Service {
         filter.addAction(Aware.ACTION_AWARE_STOP_SENSORS);
         filter.addAction(Aware.ACTION_AWARE_SPACE_MAINTENANCE);
         registerReceiver(contextBroadcaster, filter);
+
+        REQUIRED_PERMISSIONS.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);
     }
     
     @Override
@@ -99,10 +111,21 @@ public class Aware_Sensor extends Service {
     
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-    	TAG = Aware.getSetting(getApplicationContext(),Aware_Preferences.DEBUG_TAG).length()>0?Aware.getSetting(getApplicationContext(),Aware_Preferences.DEBUG_TAG):TAG;
-        DEBUG = Aware.getSetting(getApplicationContext(), Aware_Preferences.DEBUG_FLAG).equals("true");
-        if(DEBUG) Log.d(TAG, TAG + " sensor active...");
-        return START_STICKY;
+        //Ask the user all required permissions
+        final ArrayList<String> missing = new ArrayList<>();
+        for( String p : REQUIRED_PERMISSIONS ) {
+            int permission_access = ContextCompat.checkSelfPermission(getApplicationContext(), p);
+            if( permission_access != PackageManager.PERMISSION_GRANTED ) {
+                missing.add(p);
+            }
+        }
+        if( missing.size() > 0 ) {
+            Intent permissionRequest = new Intent(this, PermissionsHandler.class);
+            permissionRequest.putExtra( PermissionsHandler.EXTRA_REQUIRED_PERMISSIONS, missing.toArray(new String[missing.size()]) );
+            permissionRequest.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP );
+            startActivity(permissionRequest);
+        }
+        return super.onStartCommand(intent, flags, startId);
     }
     
 	/**

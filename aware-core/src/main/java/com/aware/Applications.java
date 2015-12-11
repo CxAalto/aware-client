@@ -25,10 +25,13 @@ import android.database.Cursor;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteException;
 import android.net.Uri;
+import android.os.Build;
+import android.provider.Settings;
 import android.support.v4.accessibilityservice.AccessibilityServiceInfoCompat;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.view.accessibility.AccessibilityEventCompat;
 import android.support.v4.view.accessibility.AccessibilityManagerCompat;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityManager;
@@ -62,6 +65,8 @@ public class Applications extends AccessibilityService {
     private static PendingIntent repeatingIntent = null;
     public static final int ACCESSIBILITY_NOTIFICATION_ID = 42;
 
+    public static final String STATUS_AWARE_ACCESSIBILITY = "STATUS_AWARE_ACCESSIBILITY";
+
     /**
      * Broadcasted event: a new application is visible on the foreground
      */
@@ -89,7 +94,7 @@ public class Applications extends AccessibilityService {
      */
     private String getApplicationName( String package_name ) {
     	PackageManager packageManager = getPackageManager();
-        ApplicationInfo appInfo = null;
+        ApplicationInfo appInfo;
         try {
             appInfo = packageManager.getApplicationInfo(package_name, PackageManager.GET_ACTIVITIES);
         } catch( final NameNotFoundException e ) {
@@ -204,7 +209,7 @@ public class Applications extends AccessibilityService {
             	//Check if there is a crashed application
 	            ActivityManager activityMng = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
 	            List<ProcessErrorStateInfo> errors = activityMng.getProcessesInErrorState();
-	            if(errors != null ) {
+	            if( errors != null ) {
 	            	for(ProcessErrorStateInfo error : errors ) {
 	            		try {
 							PackageInfo pkgInfo = packageManager.getPackageInfo(error.processName, PackageManager.GET_META_DATA);
@@ -218,7 +223,7 @@ public class Applications extends AccessibilityService {
 		            		crashData.put(Applications_Crashes.APPLICATION_NAME, appName);
 		            		crashData.put(Applications_Crashes.APPLICATION_VERSION, ( pkgInfo != null) ? pkgInfo.versionCode : -1); //some prepackages don't have version codes...
 		            		crashData.put(Applications_Crashes.ERROR_SHORT, error.shortMsg);
-		            		crashData.put(Applications_Crashes.ERROR_LONG, error.longMsg);
+		            		crashData.put(Applications_Crashes.ERROR_LONG, (error.stackTrace!=null)?error.stackTrace:"");
 		            		crashData.put(Applications_Crashes.ERROR_CONDITION, error.condition);
 		            		crashData.put(Applications_Crashes.IS_SYSTEM_APP, pkgInfo != null && isSystemPackage(pkgInfo) );
 		            		
@@ -264,6 +269,9 @@ public class Applications extends AccessibilityService {
         super.onServiceConnected();
 
         if( Aware.DEBUG ) Log.d("AWARE","Aware service connected to accessibility services...");
+
+        //This makes sure that plugins and apps can check if the accessibility service is active
+        Aware.setSetting(this, Applications.STATUS_AWARE_ACCESSIBILITY, true, "com.aware");
         
         alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
         
@@ -282,7 +290,17 @@ public class Applications extends AccessibilityService {
             updateApps = new Intent(getApplicationContext(), BackgroundService.class);
             updateApps.setAction(ACTION_AWARE_APPLICATIONS_HISTORY);
             repeatingIntent = PendingIntent.getService(getApplicationContext(), 0, updateApps, 0);
-            alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, System.currentTimeMillis()+1000, Integer.parseInt(Aware.getSetting(getApplicationContext(), Aware_Preferences.FREQUENCY_APPLICATIONS)) * 1000, repeatingIntent);
+            alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + 1000, Integer.parseInt(Aware.getSetting(getApplicationContext(), Aware_Preferences.FREQUENCY_APPLICATIONS)) * 1000, repeatingIntent);
+        }
+
+        //Retro-compatibility with Gingerbread
+        if( Build.VERSION.SDK_INT <= Build.VERSION_CODES.JELLY_BEAN ) {
+            AccessibilityServiceInfo info = new AccessibilityServiceInfo();
+            info.eventTypes = AccessibilityEvent.TYPE_NOTIFICATION_STATE_CHANGED | AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED | AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED;
+            info.feedbackType = AccessibilityServiceInfo.FEEDBACK_GENERIC;
+            info.notificationTimeout = 50;
+            info.packageNames = null;
+            this.setServiceInfo(info);
         }
 
         //Boot-up AWARE framework
@@ -292,51 +310,23 @@ public class Applications extends AccessibilityService {
     
     @Override
     public void onInterrupt() {
-        //Remind the user to activate AWARE's accessibility service again...
-        isAccessibilityServiceActive(getApplicationContext());
+        if(Aware.getSetting(getApplicationContext(), Applications.STATUS_AWARE_ACCESSIBILITY, "com.aware").equals("true")) {
+            unregisterReceiver(awareMonitor);
+        }
+        Aware.setSetting(this, Applications.STATUS_AWARE_ACCESSIBILITY, false, "com.aware");
         Log.e(TAG,"Accessibility Service has been interrupted...");
     }
-    
+
     @Override
-    public void onCreate() {
-        super.onCreate();
-
-        boolean enabled = false;
-
-        AccessibilityManager accessibilityManager = (AccessibilityManager) getSystemService(ACCESSIBILITY_SERVICE);
-        List<AccessibilityServiceInfo> enabledServices = AccessibilityManagerCompat.getEnabledAccessibilityServiceList(accessibilityManager, AccessibilityEventCompat.TYPES_ALL_MASK);
-        if( ! enabledServices.isEmpty() ) {
-            for( AccessibilityServiceInfo service : enabledServices ) {
-                Log.d(Aware.TAG, service.toString());
-                if( service.getId().contains("com.aware") ) {
-                    enabled = true;
-                }
-            }
+    public boolean onUnbind(Intent intent) {
+        if(Aware.getSetting(getApplicationContext(), Applications.STATUS_AWARE_ACCESSIBILITY, "com.aware").equals("true")) {
+            unregisterReceiver(awareMonitor);
         }
-
-        enabledServices = accessibilityManager.getEnabledAccessibilityServiceList(AccessibilityEvent.TYPES_ALL_MASK);
-        if( ! enabledServices.isEmpty() ) {
-            for( AccessibilityServiceInfo service : enabledServices ) {
-                Log.d(Aware.TAG, service.toString());
-                if( service.getId().contains("com.aware") ) {
-                    enabled = true;
-                }
-            }
-        }
-
-        if( ! enabled ) {
-            //Retro-compatibility with some devices that don't support XML defined Accessibility Services
-            AccessibilityServiceInfo info = new AccessibilityServiceInfo();
-            info.eventTypes = AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED | AccessibilityEvent.TYPE_NOTIFICATION_STATE_CHANGED | AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED;
-            info.feedbackType = AccessibilityServiceInfoCompat.FEEDBACK_ALL_MASK;
-            info.notificationTimeout = 50;
-            info.packageNames = null;
-            setServiceInfo(info);
-
-            onServiceConnected();
-        }
+        Aware.setSetting(this, Applications.STATUS_AWARE_ACCESSIBILITY, false, "com.aware");
+        Log.e(TAG,"Accessibility Service has been interrupted...");
+        return super.onUnbind(intent);
     }
-    
+
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
 
@@ -353,61 +343,93 @@ public class Applications extends AccessibilityService {
             alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, System.currentTimeMillis()+1000, Integer.parseInt(Aware.getSetting(getApplicationContext(), Aware_Preferences.FREQUENCY_APPLICATIONS)) * 1000, repeatingIntent);
         }
 
-        isAccessibilityServiceActive(getApplicationContext());
-    	
-    	return START_STICKY;
+    	return super.onStartCommand(intent, flags, startId);
     }
     
     @Override
     public void onDestroy() {
         super.onDestroy();
-        
         Aware.setSetting(getApplicationContext(), Aware_Preferences.STATUS_APPLICATIONS, false);
         alarmManager.cancel(repeatingIntent);
-        unregisterReceiver(awareMonitor);
+        try {
+            unregisterReceiver(awareMonitor);
+        } catch (Exception e) {
+            Log.e(TAG, "Tried to unregister Applications receiver not registered.");
+        }
     }
-    
+
+    private static boolean isAccessibilityEnabled(Context c) {
+        boolean enabled = false;
+
+        AccessibilityManager accessibilityManager = (AccessibilityManager) c.getSystemService(ACCESSIBILITY_SERVICE);
+
+        //Try to fetch active accessibility services directly from Android OS database instead of broken API...
+        TextUtils.SimpleStringSplitter splitter = new TextUtils.SimpleStringSplitter(':');
+        String settingValue = Settings.Secure.getString(c.getContentResolver(), Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES);
+        if( settingValue != null ) {
+            splitter.setString(settingValue);
+            while (splitter.hasNext()) {
+                if (splitter.next().matches(c.getPackageName())){
+                    enabled = true;
+                    break;
+                }
+            }
+        }
+        if( ! enabled ) {
+            try {
+                List<AccessibilityServiceInfo> enabledServices = AccessibilityManagerCompat.getEnabledAccessibilityServiceList(accessibilityManager, AccessibilityEventCompat.TYPES_ALL_MASK);
+                if( ! enabledServices.isEmpty() ) {
+                    for( AccessibilityServiceInfo service : enabledServices ) {
+                        Log.d(Aware.TAG, service.toString());
+                        if( service.getId().contains(c.getPackageName()) ) {
+                            enabled = true;
+                            break;
+                        }
+                    }
+                }
+            } catch ( NoSuchMethodError e ) {}
+        }
+        if( ! enabled ) {
+            try{
+                List<AccessibilityServiceInfo> enabledServices = accessibilityManager.getEnabledAccessibilityServiceList(AccessibilityEvent.TYPES_ALL_MASK);
+                if ( ! enabledServices.isEmpty()) {
+                    for (AccessibilityServiceInfo service : enabledServices) {
+                        Log.d(Aware.TAG, service.toString());
+                        if (service.getId().contains(c.getPackageName())) {
+                            enabled = true;
+                            break;
+                        }
+                    }
+                }
+            }catch (NoSuchMethodError e) {}
+        }
+        return enabled;
+    }
+
     /**
      * Check if the accessibility service for AWARE Aware is active
      * @return boolean isActive
      */
     public static boolean isAccessibilityServiceActive(Context c) {
-        AccessibilityManager accessibilityManager = (AccessibilityManager) c.getSystemService(ACCESSIBILITY_SERVICE);
-        List<AccessibilityServiceInfo> enabledServices = AccessibilityManagerCompat.getEnabledAccessibilityServiceList(accessibilityManager, AccessibilityEventCompat.TYPES_ALL_MASK);
-        if( ! enabledServices.isEmpty() ) {
-            for( AccessibilityServiceInfo service : enabledServices ) {
-                Log.d(Aware.TAG, service.toString());
-                if( service.getId().contains("com.aware") ) {
-                    return true;
-                }
-            }
+        if( Aware.getSetting(c, Applications.STATUS_AWARE_ACCESSIBILITY).equals("true") ) return true;
+        if( ! isAccessibilityEnabled(c) ) {
+            NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(c);
+            mBuilder.setSmallIcon(R.drawable.ic_stat_aware_accessibility);
+            mBuilder.setContentTitle("AWARE configuration");
+            mBuilder.setContentText(c.getResources().getString(R.string.aware_activate_accessibility));
+            mBuilder.setAutoCancel(true);
+            mBuilder.setOnlyAlertOnce(true); //notify the user only once
+            mBuilder.setDefaults(NotificationCompat.DEFAULT_ALL);
+
+            Intent accessibilitySettings = new Intent(android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS);
+            accessibilitySettings.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+
+            PendingIntent clickIntent = PendingIntent.getActivity(c, 0, accessibilitySettings, PendingIntent.FLAG_UPDATE_CURRENT);
+            mBuilder.setContentIntent(clickIntent);
+            NotificationManager notManager = (NotificationManager) c.getSystemService(Context.NOTIFICATION_SERVICE);
+            notManager.notify(Applications.ACCESSIBILITY_NOTIFICATION_ID, mBuilder.build());
         }
-
-        enabledServices = accessibilityManager.getEnabledAccessibilityServiceList(AccessibilityEvent.TYPES_ALL_MASK);
-        if( ! enabledServices.isEmpty() ) {
-            for( AccessibilityServiceInfo service : enabledServices ) {
-                Log.d(Aware.TAG, service.toString());
-                if( service.getId().contains("com.aware") ) {
-                    return true;
-                }
-            }
-        }
-
-        NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(c);
-        mBuilder.setSmallIcon(R.drawable.ic_stat_aware_accessibility);
-        mBuilder.setContentTitle("AWARE configuration");
-        mBuilder.setContentText(c.getResources().getString(R.string.aware_activate_accessibility));
-        mBuilder.setAutoCancel(true);
-        mBuilder.setDefaults(NotificationCompat.DEFAULT_ALL);
-
-        Intent accessibilitySettings = new Intent(android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS);
-        accessibilitySettings.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-
-        PendingIntent clickIntent = PendingIntent.getActivity(c, 0, accessibilitySettings, PendingIntent.FLAG_UPDATE_CURRENT);
-        mBuilder.setContentIntent(clickIntent);
-        NotificationManager notManager = (NotificationManager) c.getSystemService(Context.NOTIFICATION_SERVICE);
-        notManager.notify(Applications.ACCESSIBILITY_NOTIFICATION_ID, mBuilder.build());
-        return false;
+        return isAccessibilityEnabled(c);
     }
 
     /**
@@ -477,19 +499,16 @@ public class Applications extends AccessibilityService {
                 PackageManager packageManager = getPackageManager();
                 List<RunningAppProcessInfo> runningApps = activityManager.getRunningAppProcesses();
                 
-                if(Aware.DEBUG) Log.d(TAG,"Running " + runningApps.size() + " applications");
+                if(Aware.DEBUG && runningApps != null) Log.d(TAG,"Running " + runningApps.size() + " applications");
                     
                 for( RunningAppProcessInfo app : runningApps ) {
-                    
-                	Cursor appUnclosed = null;
-                	
                     try {
                         PackageInfo appPkg = packageManager.getPackageInfo(app.processName, PackageManager.GET_META_DATA);
                         ApplicationInfo appInfo = packageManager.getApplicationInfo(app.processName, PackageManager.GET_ACTIVITIES);
                         
                         String appName = ( appInfo != null ) ? (String) packageManager.getApplicationLabel(appInfo):"";
                         
-                        appUnclosed = getContentResolver().query(Applications_History.CONTENT_URI, null, Applications_History.PACKAGE_NAME + " LIKE '%"+app.processName+"%' AND "+Applications_History.PROCESS_ID + "=" +app.pid + " AND " + Applications_History.END_TIMESTAMP +"=0", null, null);
+                        Cursor appUnclosed = getContentResolver().query(Applications_History.CONTENT_URI, null, Applications_History.PACKAGE_NAME + " LIKE '%"+app.processName+"%' AND "+Applications_History.PROCESS_ID + "=" +app.pid + " AND " + Applications_History.END_TIMESTAMP +"=0", null, null);
                         if( appUnclosed == null || ! appUnclosed.moveToFirst() ) {
                             ContentValues rowData = new ContentValues();
                             rowData.put(Applications_History.TIMESTAMP, System.currentTimeMillis());
@@ -539,16 +558,15 @@ public class Applications extends AccessibilityService {
                                 if(Aware.DEBUG) Log.d(TAG,e.getMessage());
                             }
                         }
-                    }catch(PackageManager.NameNotFoundException e) {
-                    }catch( IllegalStateException e ) {
-                    } finally {
-                    	if( appUnclosed != null && ! appUnclosed.isClosed() ) appUnclosed.close();
+                        if( appUnclosed != null && ! appUnclosed.isClosed() ) appUnclosed.close();
+                    }catch(PackageManager.NameNotFoundException | IllegalStateException | SQLiteException e ) {
+                        if(Aware.DEBUG) Log.e(TAG,e.toString());
                     }
                 }
                     
                 //Close open applications that are not running anymore
-                Cursor appsOpened = getContentResolver().query(Applications_History.CONTENT_URI, null, Applications_History.END_TIMESTAMP+"=0", null, null);
                 try {
+                    Cursor appsOpened = getContentResolver().query(Applications_History.CONTENT_URI, null, Applications_History.END_TIMESTAMP+"=0", null, null);
                     if(appsOpened != null && appsOpened.moveToFirst() ) {
                         do{
                             if( ! exists(runningApps, appsOpened) ) {
@@ -564,10 +582,9 @@ public class Applications extends AccessibilityService {
                             }
                         } while(appsOpened.moveToNext());
                     }
-                }catch(IllegalStateException e) {
-                    if(Aware.DEBUG) Log.e(TAG,e.toString());
-                }finally{
                     if(appsOpened != null && ! appsOpened.isClosed() ) appsOpened.close();
+                }catch(IllegalStateException | SQLiteException e) {
+                    if(Aware.DEBUG) Log.e(TAG,e.toString());
                 }
                 
                 Intent statsUpdated = new Intent(ACTION_AWARE_APPLICATIONS_HISTORY);

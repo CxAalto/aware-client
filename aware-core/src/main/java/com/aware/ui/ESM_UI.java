@@ -2,26 +2,21 @@ package com.aware.ui;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
-import android.content.BroadcastReceiver;
+import android.app.NotificationManager;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.database.Cursor;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.support.v4.app.DialogFragment;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
-import android.view.WindowManager;
 import android.view.WindowManager.LayoutParams;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
@@ -30,7 +25,6 @@ import android.widget.LinearLayout;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.RatingBar;
-import android.widget.RelativeLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
@@ -61,9 +55,6 @@ public class ESM_UI extends DialogFragment {
 	private static int esm_type = 0;
 	private static int expires_seconds = 0;
 
-	private IntentFilter intentFilter = new IntentFilter(Intent.ACTION_SCREEN_OFF);
-	private BroadcastReceiver receiver = new ScreenReceiver();
-
 	private static int selected_scale_progress = -1;
 
 	//Checkbox ESM UI to store selected items
@@ -72,25 +63,25 @@ public class ESM_UI extends DialogFragment {
     @NonNull
     @Override
 	public Dialog onCreateDialog(Bundle savedInstanceState) {
-
-		Log.d(TAG, "onCreateDialog");
-
-		AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
 		LayoutInflater inflater = (LayoutInflater) getActivity().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 
 		TAG = Aware.getSetting(getActivity().getApplicationContext(),Aware_Preferences.DEBUG_TAG).length()>0?Aware.getSetting(getActivity().getApplicationContext(), Aware_Preferences.DEBUG_TAG):TAG;
 
-		//Fixed: register receiver to avoid errors in OnDestroy when no register is actually received.
-		getActivity().registerReceiver(receiver, intentFilter);
-
-		Cursor visible_esm = getActivity().getContentResolver().query(ESM_Data.CONTENT_URI, null, ESM_Data.STATUS + "=" + ESM.STATUS_NEW, null, ESM_Data.TIMESTAMP + " ASC LIMIT 1");
+        Cursor visible_esm;
+        if( ESM.isESMVisible(getActivity().getApplicationContext()) ) {
+            visible_esm = getActivity().getContentResolver().query(ESM_Data.CONTENT_URI, null, ESM_Data.STATUS + "=" + ESM.STATUS_VISIBLE, null, ESM_Data.TIMESTAMP + " ASC LIMIT 1");
+        } else {
+            visible_esm = getActivity().getContentResolver().query(ESM_Data.CONTENT_URI, null, ESM_Data.STATUS + "=" + ESM.STATUS_NEW, null, ESM_Data.TIMESTAMP + " ASC LIMIT 1");
+        }
         if( visible_esm != null && visible_esm.moveToFirst() ) {
         	esm_id = visible_esm.getInt(visible_esm.getColumnIndex(ESM_Data._ID));
 
-        	//Fixed: set the esm as not new anymore, to avoid displaying the same ESM twice due to changes in orientation
+        	//Fixed: set the esm as VISIBLE, to avoid displaying the same ESM twice due to changes in orientation
         	ContentValues update_state = new ContentValues();
         	update_state.put(ESM_Data.STATUS, ESM.STATUS_VISIBLE);
         	getActivity().getContentResolver().update(ESM_Data.CONTENT_URI, update_state, ESM_Data._ID +"="+ esm_id, null);
+            //--
 
         	esm_type = visible_esm.getInt(visible_esm.getColumnIndex(ESM_Data.TYPE));
         	expires_seconds = visible_esm.getInt(visible_esm.getColumnIndex(ESM_Data.EXPIRATION_THRESHOLD));
@@ -168,7 +159,7 @@ public class ESM_UI extends DialogFragment {
 
 		                    if(Aware.DEBUG) Log.d(TAG,"Answer:" + rowData.toString());
 
-		                    current_dialog.dismiss();
+							if( current_dialog != null ) current_dialog.dismiss();
 						}
 					});
         		break;
@@ -195,7 +186,6 @@ public class ESM_UI extends DialogFragment {
 	                                public void onClick(View v) {
 	                                    final Dialog editOther = new Dialog(getActivity());
 	                                	editOther.setTitle(getResources().getString(R.string.aware_esm_other_follow));
-	                                	editOther.getWindow().setType(WindowManager.LayoutParams.TYPE_SYSTEM_ALERT);
 	                                	editOther.getWindow().setGravity(Gravity.TOP);
                                         editOther.getWindow().setLayout(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
 
@@ -206,6 +196,7 @@ public class ESM_UI extends DialogFragment {
 	                                    editOther.show();
 
 	                                    final EditText otherText = new EditText(getActivity());
+										otherText.setHint(getResources().getString(R.string.aware_esm_other_follow));
 	                                    editor.addView(otherText);
 										otherText.requestFocus();
 										editOther.getWindow().setSoftInputMode(LayoutParams.SOFT_INPUT_STATE_VISIBLE);
@@ -256,7 +247,7 @@ public class ESM_UI extends DialogFragment {
 
 			                    if(Aware.DEBUG) Log.d(TAG,"Answer:" + rowData.toString());
 
-			                    current_dialog.dismiss();
+								if( current_dialog != null ) current_dialog.dismiss();
 							}
 						});
         			} catch (JSONException e) {
@@ -287,7 +278,6 @@ public class ESM_UI extends DialogFragment {
 	                                            public void onClick(View v) {
 	                                            	final Dialog editOther = new Dialog(getActivity());
 	        	                                	editOther.setTitle(getResources().getString(R.string.aware_esm_other_follow));
-	        	                                	editOther.getWindow().setType(WindowManager.LayoutParams.TYPE_SYSTEM_ALERT);
 	        	                                	editOther.getWindow().setGravity(Gravity.TOP);
 	        	                                	editOther.getWindow().setLayout(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
 
@@ -297,6 +287,7 @@ public class ESM_UI extends DialogFragment {
 	                                                editOther.show();
 
 	                                                final EditText otherText = new EditText(getActivity());
+													otherText.setHint(getResources().getString(R.string.aware_esm_other_follow));
 	                                                editor.addView(otherText);
 													otherText.requestFocus();
                                                     editOther.getWindow().setSoftInputMode(LayoutParams.SOFT_INPUT_STATE_VISIBLE);
@@ -357,9 +348,9 @@ public class ESM_UI extends DialogFragment {
 			                    Intent answer = new Intent(ESM.ACTION_AWARE_ESM_ANSWERED);
 			                    getActivity().sendBroadcast(answer);
 
-			                    if(Aware.DEBUG) Log.d(TAG,"Answer:" + rowData.toString());
+			                    if(Aware.DEBUG) Log.d(TAG,"Answer: " + rowData.toString());
 
-			                    current_dialog.dismiss();
+								if( current_dialog != null ) current_dialog.dismiss();
 							}
 						});
         			} catch (JSONException e) {
@@ -411,7 +402,7 @@ public class ESM_UI extends DialogFragment {
 
 		                    if(Aware.DEBUG) Log.d(TAG,"Answer:" + rowData.toString());
 
-		                    current_dialog.dismiss();
+							if( current_dialog != null ) current_dialog.dismiss();
 						}
 					});
     			break;
@@ -513,7 +504,7 @@ public class ESM_UI extends DialogFragment {
 
 							if(Aware.DEBUG) Log.d(TAG,"Answer:" + rowData.toString());
 
-							current_dialog.dismiss();
+							if( current_dialog != null ) current_dialog.dismiss();
 						}
 					});
 					break;
@@ -552,7 +543,7 @@ public class ESM_UI extends DialogFragment {
 
 									if(Aware.DEBUG) Log.d(TAG,"Answer:" + rowData.toString());
 
-									current_dialog.dismiss();
+									if( current_dialog != null ) current_dialog.dismiss();
 								}
 							});
 							answersHolder.addView(answer);
@@ -572,52 +563,54 @@ public class ESM_UI extends DialogFragment {
 		}
 
 		//Fixed: doesn't dismiss the dialog if touched outside or ghost touches
-		current_dialog.setCanceledOnTouchOutside(false);
-
+        current_dialog.setCanceledOnTouchOutside(false);
         return current_dialog;
 	}
 
 	@Override
 	public void onCancel(DialogInterface dialog) {
 		super.onCancel(dialog);
-
 		if( expires_seconds > 0 && expire_monitor != null ) expire_monitor.cancel(true);
-		dismissESMs();
+		dismissESM();
 	}
 
 	@Override
 	public void onDismiss(DialogInterface dialog) {
 		super.onDismiss(dialog);
-
 		if( expires_seconds > 0 && expire_monitor != null ) expire_monitor.cancel(true);
 	}
 
-    public class ScreenReceiver extends BroadcastReceiver {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            if (intent.getAction().equals(Intent.ACTION_SCREEN_OFF)) {
-                dismissESMs();
-            }
+	@Override
+	public void onPause() {
+		super.onPause();
+
+        if( ESM.isESMVisible(getActivity().getApplicationContext()) ) {
+            if( Aware.DEBUG ) Log.d(TAG, "ESM was visible, go back to notification bar");
+
+            //Revert to NEW state
+            ContentValues rowData = new ContentValues();
+            rowData.put(ESM_Data.ANSWER_TIMESTAMP, System.currentTimeMillis());
+            rowData.put(ESM_Data.STATUS, ESM.STATUS_NEW);
+            sContext.getContentResolver().update(ESM_Data.CONTENT_URI, rowData, ESM_Data._ID + "=" + esm_id, null);
+
+            //Update notification
+            ESM.notifyESM(getActivity().getApplicationContext());
+
+            current_dialog.dismiss();
+            getActivity().finish();
         }
-    }
+	}
 
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-		getActivity().unregisterReceiver(receiver);
-    }
-
-    private void dismissESMs() {
+    /**
+     * When dismissing one ESM by pressing cancel, the rest of the queue gets dismissed
+     */
+	private void dismissESM() {
         ContentValues rowData = new ContentValues();
         rowData.put(ESM_Data.ANSWER_TIMESTAMP, System.currentTimeMillis());
         rowData.put(ESM_Data.STATUS, ESM.STATUS_DISMISSED);
         sContext.getContentResolver().update(ESM_Data.CONTENT_URI, rowData, ESM_Data._ID + "=" + esm_id, null);
 
-        Intent answer = new Intent(ESM.ACTION_AWARE_ESM_DISMISSED);
-        sContext.sendBroadcast(answer);
-
-        // Check if there are any ESMs left in the queue, if so: set ESM_Data.STATUS to 'dismissed' (note, this does not dismiss the actual ESM - this is handled in ESM_Queue.java).
-        Cursor esm = sContext.getContentResolver().query(ESM_Data.CONTENT_URI, null, ESM_Data.STATUS + " in (" + ESM.STATUS_NEW + "," + ESM.STATUS_VISIBLE + ")", null, null);
+        Cursor esm = sContext.getContentResolver().query(ESM_Data.CONTENT_URI, null, ESM_Data.STATUS + " IN (" + ESM.STATUS_NEW + "," + ESM.STATUS_VISIBLE + ")", null, null);
         if( esm != null && esm.moveToFirst() ) {
             do {
                 rowData = new ContentValues();
@@ -627,6 +620,11 @@ public class ESM_UI extends DialogFragment {
             } while(esm.moveToNext());
         }
         if( esm != null && ! esm.isClosed()) esm.close();
+
+        Intent answer = new Intent(ESM.ACTION_AWARE_ESM_DISMISSED);
+        sContext.sendBroadcast(answer);
+
+		if( current_dialog != null ) current_dialog.dismiss();
     }
 
 	/**
@@ -676,7 +674,8 @@ public class ESM_UI extends DialogFragment {
 			Intent expired = new Intent(ESM.ACTION_AWARE_ESM_EXPIRED);
 			sContext.sendBroadcast(expired);
 
-			current_dialog.dismiss();
+			if( current_dialog != null ) current_dialog.dismiss();
+
 			return null;
 		}
 	}

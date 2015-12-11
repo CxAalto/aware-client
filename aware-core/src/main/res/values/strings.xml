@@ -35,4 +35,5 @@
     <string name="aware_setup_text">Setup Aware</string>
     <string name="aware_setup_text_done">Aware is setup</string>
     <string name="aware_dirty">Clean old data?</string>
+    <string name="aware_research_group">Research group</string>
 </resources>
