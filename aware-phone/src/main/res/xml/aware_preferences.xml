@@ -830,7 +830,7 @@
                 android:title="Active" />
 
             <EditTextPreference
-                android:defaultValue="https://api.awareframework.com/index.php"
+                android:defaultValue=""
                 android:key="webservice_server"
                 android:persistent="true"
                 android:summary="URL"

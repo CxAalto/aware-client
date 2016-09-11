@@ -156,9 +156,9 @@ public class Aware_Client extends Aware_Activity {
                 UUID uuid = UUID.randomUUID();
                 Aware.setSetting(getApplicationContext(), Aware_Preferences.DEVICE_ID, uuid.toString(), "com.aware.phone");
             }
-            if (Aware.getSetting(getApplicationContext(), Aware_Preferences.WEBSERVICE_SERVER).length() == 0) {
-                Aware.setSetting(getApplicationContext(), Aware_Preferences.WEBSERVICE_SERVER, "https://api.awareframework.com/index.php", "com.aware.phone");
-            }
+            //if (Aware.getSetting(getApplicationContext(), Aware_Preferences.WEBSERVICE_SERVER).length() == 0) {
+            //    Aware.setSetting(getApplicationContext(), Aware_Preferences.WEBSERVICE_SERVER, "https://api.awareframework.com/index.php", "com.aware.phone");
+            //}
 
             //Check if AWARE is active on the accessibility services
             if (!Aware.is_watch(awareContext)) {

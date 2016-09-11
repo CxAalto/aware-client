@@ -736,7 +736,7 @@
                 android:persistent="true"
                 android:summary="URL"
                 android:title="Study URL"
-                android:defaultValue="https://api.awareframework.com/index.php"/>
+                android:defaultValue=""/>
 
             <CheckBoxPreference
                 android:defaultValue="false"
