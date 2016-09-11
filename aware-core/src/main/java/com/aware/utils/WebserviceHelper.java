@@ -91,6 +91,9 @@ public class WebserviceHelper extends IntentService {
 
         String WEBSERVER = Aware.getSetting(getApplicationContext(), Aware_Preferences.WEBSERVICE_SERVER);
         String protocol = WEBSERVER.substring(0, WEBSERVER.indexOf(":"));
+        boolean WEBSERVICE_STATELESS = Aware.getSetting(getApplicationContext(), Aware_Preferences.WEBSERVICE_STATELESS).equals("true");
+        boolean WEBSERVICE_ONLY = Aware.getSetting(getApplicationContext(), Aware_Preferences.WEBSERVICE_ONLY).equals("true");
+
 
         //Fixed: not using webservices
         if (WEBSERVER.length() == 0) return;
@@ -147,8 +150,10 @@ public class WebserviceHelper extends IntentService {
             fields.put(Aware_Preferences.DEVICE_ID, DEVICE_ID);
             fields.put(EXTRA_FIELDS, TABLES_FIELDS);
 
+            String response = null;
+            // Do not run /create_table if webservice_stateless == true
+            if (! WEBSERVICE_STATELESS) {
             //Create table if doesn't exist on the remote webservice server
-            String response;
             if (protocol.equals("https")) {
                 try {
                     response = new Https(getApplicationContext(), SSLManager.getHTTPS(getApplicationContext(), WEBSERVER)).dataPOST(WEBSERVER + "/" + DATABASE_TABLE + "/create_table", fields, true);
@@ -158,8 +163,9 @@ public class WebserviceHelper extends IntentService {
             } else {
                 response = new Http(getApplicationContext()).dataPOST(WEBSERVER + "/" + DATABASE_TABLE + "/create_table", fields, true);
             }
+            }
 
-            if (response != null) {
+            if (response != null || WEBSERVICE_STATELESS) {
                 String[] columnsStr = new String[]{};
                 Cursor columnsDB = getContentResolver().query(CONTENT_URI, null, null, null, null);
                 if (columnsDB != null && columnsDB.moveToFirst()) {
@@ -172,7 +178,8 @@ public class WebserviceHelper extends IntentService {
                     request.put(Aware_Preferences.DEVICE_ID, DEVICE_ID);
 
                     //check the latest entry in remote database
-                    String latest;
+                    String latest = "[]";
+                    if (!WEBSERVICE_STATELESS && !WEBSERVICE_ONLY) {
                     if (protocol.equals("https")) {
                         try {
                             latest = new Https(getApplicationContext(), SSLManager.getHTTPS(getApplicationContext(), WEBSERVER)).dataPOST(WEBSERVER + "/" + DATABASE_TABLE + "/latest", request, true);
@@ -183,6 +190,7 @@ public class WebserviceHelper extends IntentService {
                         latest = new Http(getApplicationContext()).dataPOST(WEBSERVER + "/" + DATABASE_TABLE + "/latest", request, true);
                     }
                     if (latest == null) return; //unable to reach the server, cancel this sync
+                    }
 
                     //If in a study, get only data from joined date onwards
                     String study_condition = "";
@@ -342,9 +350,10 @@ public class WebserviceHelper extends IntentService {
                                 highFrequencySensors.add("proximity");
 
                                 //Clean the local database, now that it is uploaded to the server, if required
-                                if (Aware.getSetting(getApplicationContext(), Aware_Preferences.FREQUENCY_CLEAN_OLD_DATA).length() > 0
+                                if ((Aware.getSetting(getApplicationContext(), Aware_Preferences.FREQUENCY_CLEAN_OLD_DATA).length() > 0
                                         && Integer.parseInt(Aware.getSetting(getApplicationContext(), Aware_Preferences.FREQUENCY_CLEAN_OLD_DATA)) == 4
-                                        && highFrequencySensors.contains(DATABASE_TABLE)) {
+                                        && highFrequencySensors.contains(DATABASE_TABLE))
+                                    || WEBSERVICE_ONLY || WEBSERVICE_STATELESS ) {
 
                                     long last = rows.getJSONObject(rows.length()-1).getLong("timestamp");
                                     getContentResolver().delete(CONTENT_URI, "timestamp <= " + last, null);

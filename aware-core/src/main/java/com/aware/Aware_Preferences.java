@@ -465,6 +465,16 @@ public class Aware_Preferences {
     public static final String FREQUENCY_WEBSERVICE = "frequency_webservice";
 
     /**
+     * AWARE webservice only: remove local data always
+     */
+    public static final String WEBSERVICE_ONLY = "webservice_only";
+
+    /**
+     * AWARE webservice stateless: don't sync or request /latest.
+     */
+    public static final String WEBSERVICE_STATELESS = "webservice_stateless";
+
+    /**
      * How frequently to clean old data?
      * 0 - never
      * 1 - weekly
