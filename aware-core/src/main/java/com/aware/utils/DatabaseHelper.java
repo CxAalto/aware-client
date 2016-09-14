@@ -50,7 +50,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         this.new_version = database_version;
 		this.mContext = context;
 
-		File aware_folder = new File(Environment.getExternalStoragePublicDirectory("AWARE").toString());
+		File aware_folder = new File(Environment.getExternalStoragePublicDirectory("NIIMAAWARE").toString());
 		aware_folder.mkdirs();
 
 //        File documents_folder = mContext.getExternalFilesDir(null); //get the root of OS handled app external folder
@@ -170,7 +170,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     	}
     	
     	//Get reference to database file, we might not have it.
-        File database_file = new File( Environment.getExternalStoragePublicDirectory("AWARE").toString(), database_name );
+        File database_file = new File( Environment.getExternalStoragePublicDirectory("NIIMAAWARE").toString(), database_name );
 //    	File database_file = new File( mContext.getExternalFilesDir(null) + "/Documents/AWARE/" , database_name );
     	try {
     	    SQLiteDatabase current_database = SQLiteDatabase.openDatabase(database_file.getPath(), null, SQLiteDatabase.CREATE_IF_NECESSARY);
@@ -209,7 +209,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     	}
     	
     	//Get reference to database file, we might not have it.
-        File database_file = new File( Environment.getExternalStoragePublicDirectory("AWARE").toString(), database_name );
+        File database_file = new File( Environment.getExternalStoragePublicDirectory("NIIMAAWARE").toString(), database_name );
 //		File database_file = new File( mContext.getExternalFilesDir(null) + "/Documents/AWARE/" , database_name );
 		try {
 			SQLiteDatabase current_database = SQLiteDatabase.openDatabase(database_file.getPath(), null, SQLiteDatabase.OPEN_READONLY);

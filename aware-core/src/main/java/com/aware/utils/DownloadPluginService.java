@@ -82,7 +82,7 @@ public class DownloadPluginService extends IntentService {
                 JSONObject json_package = new JSONObject(response);
 
                 //Create the folder where all the plugins will be stored on external storage
-                File folders = new File(Environment.getExternalStoragePublicDirectory("AWARE/plugins").toString());
+                File folders = new File(Environment.getExternalStoragePublicDirectory("NIIMAAWARE/plugins").toString());
                 folders.mkdirs();
 
                 String package_url = study_host + json_package.getString("package_path") + json_package.getString("package_name");
@@ -125,7 +125,7 @@ public class DownloadPluginService extends IntentService {
 
                     Ion.with(getApplicationContext())
                             .load(package_url)
-                            .write(new File(Environment.getExternalStoragePublicDirectory("AWARE/plugins/" + json_package.getString("package_name")).toString()))
+                            .write(new File(Environment.getExternalStoragePublicDirectory("NIIMAAWARE/plugins/" + json_package.getString("package_name")).toString()))
                             .setCallback(new FutureCallback<File>() {
                                 @Override
                                 public void onCompleted(Exception e, File result) {
@@ -143,7 +143,7 @@ public class DownloadPluginService extends IntentService {
                 } else {
                     Ion.with(getApplicationContext())
                             .load(package_url)
-                            .write(new File(Environment.getExternalStoragePublicDirectory("AWARE/plugins/" + json_package.getString("package_name")).toString()))
+                            .write(new File(Environment.getExternalStoragePublicDirectory("NIIMAAWARE/plugins/" + json_package.getString("package_name")).toString()))
                             .setCallback(new FutureCallback<File>() {
                                 @Override
                                 public void onCompleted(Exception e, File result) {
