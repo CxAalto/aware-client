@@ -6,13 +6,13 @@
         android:name="com.aware.READ_CONTEXT_DATA"
         android:description="@string/read_permission"
         android:icon="@drawable/ic_launcher_settings"
-        android:label="Read AWARE&apos;s Context data"
+        android:label="Read NIIMAAWARE&apos;s Context data"
         android:protectionLevel="normal" />
     <permission
         android:name="com.aware.WRITE_CONTEXT_DATA"
         android:description="@string/write_permission"
         android:icon="@drawable/ic_launcher_settings"
-        android:label="Write to AWARE&apos;s Context data"
+        android:label="Write to NIIMAAWARE&apos;s Context data"
         android:protectionLevel="normal" />
 
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
