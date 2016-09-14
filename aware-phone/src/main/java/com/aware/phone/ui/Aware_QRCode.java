@@ -196,7 +196,7 @@ public class Aware_QRCode extends Aware_Activity implements ZBarScannerView.Resu
     }
 
     private boolean onTap(float rawX, float rawY) {
-        if (Aware.DEBUG) Log.d(Aware.TAG, "AWARE QRCode scanner tapped");
+        if (Aware.DEBUG) Log.d(Aware.TAG, "NIIMAAWARE QRCode scanner tapped");
 
         BarcodeGraphic graphic = mGraphicOverlay.getFirstGraphic();
         Barcode barcode = null;

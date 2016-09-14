@@ -50,7 +50,7 @@
     </PreferenceCategory>
     <PreferenceCategory
         android:key="sensors"
-        android:summary="AWARE default sensors"
+        android:summary="NIIMAAWARE default sensors"
         android:title="Sensors">
 
         <PreferenceScreen
@@ -817,11 +817,11 @@
             android:icon="@drawable/ic_action_study"
             android:key="webservice"
             android:summary="Study and sync settings"
-            android:title="AWARE Study">
+            android:title="NIIMAAWARE Study">
 
             <com.aware.phone.ui.Aware_Toolbar
                 android:key="webservice"
-                android:title="AWARE Study" />
+                android:title="NIIMAAWARE Study" />
 
             <CheckBoxPreference
                 android:defaultValue="false"

@@ -278,7 +278,7 @@ public class Aware_Client extends Aware_Activity {
             esm_creator.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
                 @Override
                 public boolean onPreferenceClick(Preference preference) {
-                    Toast.makeText(getApplicationContext(), "Please install AWARE: ESM Generator", Toast.LENGTH_LONG).show();
+                    Toast.makeText(getApplicationContext(), "Please install NIIMAAWARE: ESM Generator", Toast.LENGTH_LONG).show();
                     Intent esmCreator = new Intent(Intent.ACTION_VIEW);
                     esmCreator.setData(Uri.parse("market://details?id=com.niels.esmgenerator"));
                     startActivity(esmCreator);
