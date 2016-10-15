@@ -66,7 +66,12 @@ public class Locations extends Aware_Sensor implements LocationListener {
                     }
 
                     // Are we within the geofence, if we are given one?
-                    Boolean permitted = testGeoFence(bestLocation.getLatitude(), bestLocation.getLongitude());
+                    Boolean permitted;
+                    if (bestLocation != null) {
+                        permitted = testGeoFence(bestLocation.getLatitude(), bestLocation.getLongitude());
+                    } else {
+                        permitted = true;  // unused because no location.
+                    }
                     if (Aware.DEBUG) Log.d(TAG, "Locations: geofencing: permitted=" + permitted);
 
                     if (bestLocation != null) {
@@ -505,6 +510,7 @@ public class Locations extends Aware_Sensor implements LocationListener {
         }
 
         // Are we within the geofence, if we are given one?
+        // Below we don't handle bestLocaiton=null case
         Boolean permitted = testGeoFence(bestLocation.getLatitude(), bestLocation.getLongitude());
         if (Aware.DEBUG) Log.d(TAG, "Locations: geofencing: permitted=" + permitted);
 
