@@ -92,6 +92,7 @@ public class Accelerometer_Provider extends ContentProvider {
 
         public static final String _ID = "_id";
         public static final String TIMESTAMP = "timestamp";
+        public static final String SENSOR_TIMESTAMP = "sensor_timestamp";
         public static final String DEVICE_ID = "device_id";
         public static final String VALUES_0 = "double_values_0";
         public static final String VALUES_1 = "double_values_1";
@@ -120,6 +121,7 @@ public class Accelerometer_Provider extends ContentProvider {
             // accelerometer data
             Accelerometer_Data._ID + " integer primary key autoincrement,"
                     + Accelerometer_Data.TIMESTAMP + " real default 0,"
+                    + Accelerometer_Data.SENSOR_TIMESTAMP + " long default 0,"
                     + Accelerometer_Data.DEVICE_ID + " text default '',"
                     + Accelerometer_Data.VALUES_0 + " real default 0,"
                     + Accelerometer_Data.VALUES_1 + " real default 0,"
@@ -310,6 +312,7 @@ public class Accelerometer_Provider extends ContentProvider {
         accelDataMap = new HashMap<>();
         accelDataMap.put(Accelerometer_Data._ID, Accelerometer_Data._ID);
         accelDataMap.put(Accelerometer_Data.TIMESTAMP, Accelerometer_Data.TIMESTAMP);
+        accelDataMap.put(Accelerometer_Data.SENSOR_TIMESTAMP, Accelerometer_Data.SENSOR_TIMESTAMP);
         accelDataMap.put(Accelerometer_Data.DEVICE_ID, Accelerometer_Data.DEVICE_ID);
         accelDataMap.put(Accelerometer_Data.VALUES_0, Accelerometer_Data.VALUES_0);
         accelDataMap.put(Accelerometer_Data.VALUES_1, Accelerometer_Data.VALUES_1);

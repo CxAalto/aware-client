@@ -53,6 +53,10 @@ public class Accelerometer extends Aware_Sensor implements SensorEventListener {
     private static long LAST_TS = 0;
     private static long LAST_SAVE = 0;
 
+    private static boolean BUFFER_IO = false;
+    private static int FIFO_SIZE = 0;
+    private static float BOOT_TIME_ms = 0;
+
     private static int FREQUENCY = -1;
     private static double THRESHOLD = 0;
     private static boolean ENFORCE_FREQUENCY = false;
@@ -85,6 +89,14 @@ public class Accelerometer extends Aware_Sensor implements SensorEventListener {
     @Override
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
         //We log current accuracy on the sensor changed event
+    }
+
+    public class SensorTester implements SensorEventListener {
+        public void onAccuracyChanged(Sensor sensor, int accuracy) {
+            //We log current accuracy on the sensor changed event
+        }
+        public void onSensorChanged(SensorEvent event) {
+        }
     }
 
     @Override
@@ -121,6 +133,7 @@ public class Accelerometer extends Aware_Sensor implements SensorEventListener {
         ContentValues rowData = new ContentValues();
         rowData.put(Accelerometer_Data.DEVICE_ID, Aware.getSetting(getApplicationContext(), Aware_Preferences.DEVICE_ID));
         rowData.put(Accelerometer_Data.TIMESTAMP, TS);
+        rowData.put(Accelerometer_Data.SENSOR_TIMESTAMP, event.timestamp); //convert from nano to milliseconds
         rowData.put(Accelerometer_Data.VALUES_0, event.values[0]);
         rowData.put(Accelerometer_Data.VALUES_1, event.values[1]);
         rowData.put(Accelerometer_Data.VALUES_2, event.values[2]);
@@ -219,6 +232,14 @@ public class Accelerometer extends Aware_Sensor implements SensorEventListener {
         mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
         mAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
 
+        if (android.os.Build.VERSION.SDK_INT >= 19 && mAccelerometer.getFifoReservedEventCount() > 0) {
+            // Android 4.4+, we can use buffered sensor IO
+            BUFFER_IO = true;
+            FIFO_SIZE = mAccelerometer.getFifoReservedEventCount();
+            BOOT_TIME_ms = java.lang.System.currentTimeMillis() - android.os.SystemClock.elapsedRealtime();
+            if (Aware.DEBUG) Log.d(TAG, "Accelerometer buffer IO on, fifo_size=" + FIFO_SIZE);
+        }
+
         sensorThread = new HandlerThread(TAG);
         sensorThread.start();
 
@@ -280,6 +301,13 @@ public class Accelerometer extends Aware_Sensor implements SensorEventListener {
                 boolean new_enforce_frequency = (Aware.getSetting(getApplicationContext(), Aware_Preferences.FREQUENCY_ACCELEROMETER_ENFORCE).equals("true")
                         || Aware.getSetting(getApplicationContext(), Aware_Preferences.ENFORCE_FREQUENCY_ALL).equals("true"));
 
+                int MAX_BUFFER_DELAY_us = -1;
+                if (BUFFER_IO) {
+                    MAX_BUFFER_DELAY_us = FIFO_SIZE * new_frequency;
+                    MAX_BUFFER_DELAY_us = Math.min(MAX_BUFFER_DELAY_us, 10*1000000);
+                    if (Aware.DEBUG) Log.d(TAG, "Accelerometer: buffer IO on, delay=" + MAX_BUFFER_DELAY_us + "us");
+                }
+
                 if (FREQUENCY != new_frequency
                         || THRESHOLD != new_threshold
                         || ENFORCE_FREQUENCY != new_enforce_frequency){
@@ -292,10 +320,14 @@ public class Accelerometer extends Aware_Sensor implements SensorEventListener {
                     ENFORCE_FREQUENCY = new_enforce_frequency;
                 }
 
-                mSensorManager.registerListener(this, mAccelerometer, Integer.parseInt(Aware.getSetting(getApplicationContext(), Aware_Preferences.FREQUENCY_ACCELEROMETER)), sensorHandler);
+                if (BUFFER_IO) {
+                    mSensorManager.registerListener(this, mAccelerometer, Integer.parseInt(Aware.getSetting(getApplicationContext(), Aware_Preferences.FREQUENCY_ACCELEROMETER)), MAX_BUFFER_DELAY_us, sensorHandler);
+                } else {
+                    mSensorManager.registerListener(this, mAccelerometer, Integer.parseInt(Aware.getSetting(getApplicationContext(), Aware_Preferences.FREQUENCY_ACCELEROMETER)), sensorHandler);
+                }
                 LAST_SAVE = System.currentTimeMillis();
 
-                if (Aware.DEBUG) Log.d(TAG, "Accelerometer service active: " + FREQUENCY + "ms");
+                if (Aware.DEBUG) Log.d(TAG, "Accelerometer service active: " + FREQUENCY + "us");
             }
         }
 
