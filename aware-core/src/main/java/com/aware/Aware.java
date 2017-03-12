@@ -528,7 +528,7 @@ public class Aware extends Service {
                     Scheduler.Schedule watchdog = Scheduler.getSchedule(this, SCHEDULE_KEEP_ALIVE);
                     if (watchdog == null) {
                         watchdog = new Scheduler.Schedule(SCHEDULE_KEEP_ALIVE);
-                        watchdog.setInterval(5)
+                        watchdog.setInterval(60)
                                 .setActionType(Scheduler.ACTION_TYPE_SERVICE)
                                 .setActionIntentAction(ACTION_AWARE_KEEP_ALIVE)
                                 .setActionClass(getPackageName() + "/" + getClass().getName());
@@ -546,7 +546,7 @@ public class Aware extends Service {
                     Scheduler.Schedule compliance = Scheduler.getSchedule(this, Aware.SCHEDULE_STUDY_COMPLIANCE);
                     if (compliance == null) {
                         compliance = new Scheduler.Schedule(Aware.SCHEDULE_STUDY_COMPLIANCE);
-                        compliance.setInterval(10)
+                        compliance.setInterval(300)
                                 .setActionType(Scheduler.ACTION_TYPE_SERVICE)
                                 .setActionIntentAction(Aware.ACTION_AWARE_STUDY_COMPLIANCE)
                                 .setActionClass(getPackageName() + "/" + getClass().getName());
