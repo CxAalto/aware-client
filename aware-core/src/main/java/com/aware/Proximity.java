@@ -52,6 +52,7 @@ public class Proximity extends Aware_Sensor implements SensorEventListener {
 
     private static Float LAST_VALUE = null;
     private static long LAST_TS = 0;
+    private static long LAST_SAVE = 0;
 
     private static int FREQUENCY = -1;
     private static double THRESHOLD = 0;
@@ -111,15 +112,15 @@ public class Proximity extends Aware_Sensor implements SensorEventListener {
         rowData.put(Proximity_Data.ACCURACY, event.accuracy);
         rowData.put(Proximity_Data.LABEL, LABEL);
 
-        if (data_values.size() < 250) {
-            data_values.add(rowData);
+        data_values.add(rowData);
 
-            Intent proxyData = new Intent(ACTION_AWARE_PROXIMITY);
-            proxyData.putExtra(EXTRA_DATA, rowData);
-            sendBroadcast(proxyData);
+        Intent proxyData = new Intent(ACTION_AWARE_PROXIMITY);
+        proxyData.putExtra(EXTRA_DATA, rowData);
+        sendBroadcast(proxyData);
 
-            if (Aware.DEBUG) Log.d(TAG, "Proximity:" + rowData.toString());
+        if (Aware.DEBUG) Log.d(TAG, "Proximity:" + rowData.toString());
 
+        if (data_values.size() < 250 && TS < LAST_SAVE + 300000) {
             return;
         }
 
@@ -136,6 +137,7 @@ public class Proximity extends Aware_Sensor implements SensorEventListener {
             if (Aware.DEBUG) Log.d(TAG, e.getMessage());
         }
         data_values.clear();
+        LAST_SAVE = TS;
     }
 
     /**
@@ -276,6 +278,7 @@ public class Proximity extends Aware_Sensor implements SensorEventListener {
                 }
 
                 mSensorManager.registerListener(this, mProximity, Integer.parseInt(Aware.getSetting(getApplicationContext(), Aware_Preferences.FREQUENCY_PROXIMITY)), sensorHandler);
+                LAST_SAVE = System.currentTimeMillis();
 
                 if (Aware.DEBUG) Log.d(TAG, "Proximity service active: " + FREQUENCY + "ms");
             }

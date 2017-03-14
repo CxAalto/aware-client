@@ -51,6 +51,7 @@ public class LinearAccelerometer extends Aware_Sensor implements SensorEventList
 
     private static Float[] LAST_VALUES = null;
     private static long LAST_TS = 0;
+    private static long LAST_SAVE = 0;
 
     private static int FREQUENCY = -1;
     private static double THRESHOLD = 0;
@@ -133,15 +134,15 @@ public class LinearAccelerometer extends Aware_Sensor implements SensorEventList
         rowData.put(Linear_Accelerometer_Data.ACCURACY, event.accuracy);
         rowData.put(Linear_Accelerometer_Data.LABEL, LABEL);
 
-        if (data_values.size() < 250) {
-            data_values.add(rowData);
+        data_values.add(rowData);
 
-            Intent accelData = new Intent(ACTION_AWARE_LINEAR_ACCELEROMETER);
-            accelData.putExtra(EXTRA_DATA, rowData);
-            sendBroadcast(accelData);
+        Intent accelData = new Intent(ACTION_AWARE_LINEAR_ACCELEROMETER);
+        accelData.putExtra(EXTRA_DATA, rowData);
+        sendBroadcast(accelData);
 
-            if (Aware.DEBUG) Log.d(TAG, "Linear-accelerometer:" + rowData.toString());
+        if (Aware.DEBUG) Log.d(TAG, "Linear-accelerometer:" + rowData.toString());
 
+        if (data_values.size() < 250 && TS < LAST_SAVE + 300000) {
             return;
         }
 
@@ -158,6 +159,7 @@ public class LinearAccelerometer extends Aware_Sensor implements SensorEventList
             if (Aware.DEBUG) Log.d(TAG, e.getMessage());
         }
         data_values.clear();
+        LAST_SAVE = TS;
     }
 
     /**
@@ -295,6 +297,7 @@ public class LinearAccelerometer extends Aware_Sensor implements SensorEventList
                 }
 
                 mSensorManager.registerListener(this, mLinearAccelerator, Integer.parseInt(Aware.getSetting(getApplicationContext(), Aware_Preferences.FREQUENCY_LINEAR_ACCELEROMETER)), sensorHandler);
+                LAST_SAVE = System.currentTimeMillis();
 
                 if (Aware.DEBUG) Log.d(TAG, "Linear-accelerometer service active: " + FREQUENCY + "ms");
             }

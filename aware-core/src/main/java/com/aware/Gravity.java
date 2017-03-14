@@ -52,6 +52,7 @@ public class Gravity extends Aware_Sensor implements SensorEventListener {
 
     private static Float[] LAST_VALUES = null;
     private static long LAST_TS = 0;
+    private static long LAST_SAVE = 0;
 
     private static int FREQUENCY = -1;
     private static double THRESHOLD = 0;
@@ -133,15 +134,15 @@ public class Gravity extends Aware_Sensor implements SensorEventListener {
         rowData.put(Gravity_Data.ACCURACY, event.accuracy);
         rowData.put(Gravity_Data.LABEL, LABEL);
 
-        if (data_values.size() < 250) {
-            data_values.add(rowData);
+        data_values.add(rowData);
 
-            Intent gravityData = new Intent(ACTION_AWARE_GRAVITY);
-            gravityData.putExtra(EXTRA_DATA, rowData);
-            sendBroadcast(gravityData);
+        Intent gravityData = new Intent(ACTION_AWARE_GRAVITY);
+        gravityData.putExtra(EXTRA_DATA, rowData);
+        sendBroadcast(gravityData);
 
-            if (Aware.DEBUG) Log.d(TAG, "Gravity:" + rowData.toString());
+        if (Aware.DEBUG) Log.d(TAG, "Gravity:" + rowData.toString());
 
+        if (data_values.size() < 250 && TS < LAST_SAVE + 300000) {
             return;
         }
 
@@ -158,6 +159,7 @@ public class Gravity extends Aware_Sensor implements SensorEventListener {
             if (Aware.DEBUG) Log.d(TAG, e.getMessage());
         }
         data_values.clear();
+        LAST_SAVE = TS;
     }
 
     /**
@@ -295,6 +297,7 @@ public class Gravity extends Aware_Sensor implements SensorEventListener {
                 }
 
                 mSensorManager.registerListener(this, mGravity, Integer.parseInt(Aware.getSetting(getApplicationContext(), Aware_Preferences.FREQUENCY_GRAVITY)), sensorHandler);
+                LAST_SAVE = System.currentTimeMillis();
 
                 if (Aware.DEBUG) Log.d(TAG, "Gravity service active: " + FREQUENCY + "ms");
             }

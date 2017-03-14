@@ -51,6 +51,7 @@ public class Gyroscope extends Aware_Sensor implements SensorEventListener {
 
     private static Float[] LAST_VALUES = null;
     private static long LAST_TS = 0;
+    private static long LAST_SAVE = 0;
 
     private static int FREQUENCY = -1;
     private static double THRESHOLD = 0;
@@ -134,15 +135,15 @@ public class Gyroscope extends Aware_Sensor implements SensorEventListener {
         rowData.put(Gyroscope_Data.ACCURACY, event.accuracy);
         rowData.put(Gyroscope_Data.LABEL, LABEL);
 
-        if (data_values.size() < 250) {
-            data_values.add(rowData);
+        data_values.add(rowData);
 
-            Intent gyroData = new Intent(ACTION_AWARE_GYROSCOPE);
-            gyroData.putExtra(EXTRA_DATA, rowData);
-            sendBroadcast(gyroData);
+        Intent gyroData = new Intent(ACTION_AWARE_GYROSCOPE);
+        gyroData.putExtra(EXTRA_DATA, rowData);
+        sendBroadcast(gyroData);
 
-            if (Aware.DEBUG) Log.d(TAG, "Gyroscope:" + rowData.toString());
+        if (Aware.DEBUG) Log.d(TAG, "Gyroscope:" + rowData.toString());
 
+        if (data_values.size() < 250 && TS < LAST_SAVE + 300000) {
             return;
         }
 
@@ -159,6 +160,7 @@ public class Gyroscope extends Aware_Sensor implements SensorEventListener {
             if (Aware.DEBUG) Log.d(TAG, e.getMessage());
         }
         data_values.clear();
+        LAST_SAVE = TS;
     }
 
     /**
@@ -300,6 +302,7 @@ public class Gyroscope extends Aware_Sensor implements SensorEventListener {
                 }
 
                 mSensorManager.registerListener(this, mGyroscope, Integer.parseInt(Aware.getSetting(getApplicationContext(), Aware_Preferences.FREQUENCY_GYROSCOPE)), sensorHandler);
+                LAST_SAVE = System.currentTimeMillis();
             }
 
             if (Aware.DEBUG) Log.d(TAG, "Gyroscope service active: " + FREQUENCY + "ms");
