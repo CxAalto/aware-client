@@ -51,8 +51,12 @@ public class Proximity extends Aware_Sensor implements SensorEventListener {
     private static PowerManager.WakeLock wakeLock = null;
 
     private static Float LAST_VALUE = null;
+    private static long LAST_TS = 0;
+
     private static int FREQUENCY = -1;
     private static double THRESHOLD = 0;
+    // Reject any data points that come in more often than frequency
+    private static boolean ENFORCE_FREQUENCY = false;
 
     /**
      * Broadcasted event: new sensor values
@@ -91,6 +95,9 @@ public class Proximity extends Aware_Sensor implements SensorEventListener {
 
     @Override
     public void onSensorChanged(SensorEvent event) {
+        long TS = System.currentTimeMillis();
+        if (TS < LAST_TS + FREQUENCY/1000 )
+            return;
         if (LAST_VALUE != null && THRESHOLD > 0 && Math.abs(event.values[0] - LAST_VALUE) < THRESHOLD) {
             return;
         }
@@ -99,7 +106,7 @@ public class Proximity extends Aware_Sensor implements SensorEventListener {
 
         ContentValues rowData = new ContentValues();
         rowData.put(Proximity_Data.DEVICE_ID, Aware.getSetting(getApplicationContext(), Aware_Preferences.DEVICE_ID));
-        rowData.put(Proximity_Data.TIMESTAMP, System.currentTimeMillis());
+        rowData.put(Proximity_Data.TIMESTAMP, TS);
         rowData.put(Proximity_Data.PROXIMITY, event.values[0]);
         rowData.put(Proximity_Data.ACCURACY, event.accuracy);
         rowData.put(Proximity_Data.LABEL, LABEL);
@@ -252,14 +259,20 @@ public class Proximity extends Aware_Sensor implements SensorEventListener {
                     Aware.setSetting(this, Aware_Preferences.THRESHOLD_PROXIMITY, 0.0);
                 }
 
-                if (FREQUENCY != Integer.parseInt(Aware.getSetting(getApplicationContext(), Aware_Preferences.FREQUENCY_PROXIMITY))
-                        || THRESHOLD != Double.parseDouble(Aware.getSetting(getApplicationContext(), Aware_Preferences.THRESHOLD_PROXIMITY))) {
+                int new_frequency = Integer.parseInt(Aware.getSetting(getApplicationContext(), Aware_Preferences.FREQUENCY_PROXIMITY));
+                double new_threshold = Double.parseDouble(Aware.getSetting(getApplicationContext(), Aware_Preferences.THRESHOLD_PROXIMITY));
+                boolean new_enforce_frequency = Aware.getSetting(getApplicationContext(), Aware_Preferences.FREQUENCY_PROXIMITY_ENFORCE).equals("true");
+
+                if (FREQUENCY != new_frequency
+                        || THRESHOLD != new_threshold
+                        || ENFORCE_FREQUENCY != new_enforce_frequency) {
 
                     sensorHandler.removeCallbacksAndMessages(null);
                     mSensorManager.unregisterListener(this, mProximity);
 
-                    FREQUENCY = Integer.parseInt(Aware.getSetting(getApplicationContext(), Aware_Preferences.FREQUENCY_PROXIMITY));
-                    THRESHOLD = Double.parseDouble(Aware.getSetting(getApplicationContext(), Aware_Preferences.THRESHOLD_PROXIMITY));
+                    FREQUENCY = new_frequency;
+                    THRESHOLD = new_threshold;
+                    ENFORCE_FREQUENCY = new_enforce_frequency;
                 }
 
                 mSensorManager.registerListener(this, mProximity, Integer.parseInt(Aware.getSetting(getApplicationContext(), Aware_Preferences.FREQUENCY_PROXIMITY)), sensorHandler);
