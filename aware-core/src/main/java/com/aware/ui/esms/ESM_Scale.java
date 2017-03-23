@@ -142,8 +142,35 @@ public class ESM_Scale extends ESM_Question {
             final TextView current_slider_value = (TextView) ui.findViewById(R.id.esm_slider_value);
             current_slider_value.setText(String.valueOf(selected_scale_progress));
 
-            final SeekBar seekBar = (SeekBar) ui.findViewById(R.id.esm_scale);
-            seekBar.setOnClickListener(new View.OnClickListener() {
+            class SubmitAnswer implements View.OnClickListener {
+                @Override
+                public void onClick(View v) {
+
+                    try {
+                        if (getExpirationThreshold() > 0 && expire_monitor != null) expire_monitor.cancel(true);
+
+                        ContentValues rowData = new ContentValues();
+                        rowData.put(ESM_Provider.ESM_Data.ANSWER_TIMESTAMP, System.currentTimeMillis());
+                        rowData.put(ESM_Provider.ESM_Data.ANSWER, selected_scale_progress);
+                        rowData.put(ESM_Provider.ESM_Data.STATUS, ESM.STATUS_ANSWERED);
+
+                        getContext().getContentResolver().update(ESM_Provider.ESM_Data.CONTENT_URI, rowData, ESM_Provider.ESM_Data._ID + "=" + getID(), null);
+
+                        Intent answer = new Intent(ESM.ACTION_AWARE_ESM_ANSWERED);
+                        answer.putExtra(ESM.EXTRA_ANSWER, rowData.getAsString(ESM_Provider.ESM_Data.ANSWER));
+                        getActivity().sendBroadcast(answer);
+
+                        if (Aware.DEBUG) Log.d(Aware.TAG, "Answer:" + rowData.toString());
+
+                        esm_dialog.dismiss();
+
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+
+            class ClickAnswer implements View.OnClickListener {
                 @Override
                 public void onClick(View v) {
                     try {
@@ -153,7 +180,13 @@ public class ESM_Scale extends ESM_Question {
                         e.printStackTrace();
                     }
                 }
-            });
+            }
+
+            final SeekBar seekBar = (SeekBar) ui.findViewById(R.id.esm_scale);
+            if (getOneClick())
+                seekBar.setOnClickListener(new SubmitAnswer());
+            else
+                seekBar.setOnClickListener(new ClickAnswer());
 
             seekBar.incrementProgressBy(step_size);
 
@@ -215,33 +248,7 @@ public class ESM_Scale extends ESM_Question {
             });
             Button scale_submit = (Button) ui.findViewById(R.id.esm_submit);
             scale_submit.setText(getSubmitButton());
-            scale_submit.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-
-                    try {
-                        if (getExpirationThreshold() > 0 && expire_monitor != null) expire_monitor.cancel(true);
-
-                        ContentValues rowData = new ContentValues();
-                        rowData.put(ESM_Provider.ESM_Data.ANSWER_TIMESTAMP, System.currentTimeMillis());
-                        rowData.put(ESM_Provider.ESM_Data.ANSWER, selected_scale_progress);
-                        rowData.put(ESM_Provider.ESM_Data.STATUS, ESM.STATUS_ANSWERED);
-
-                        getContext().getContentResolver().update(ESM_Provider.ESM_Data.CONTENT_URI, rowData, ESM_Provider.ESM_Data._ID + "=" + getID(), null);
-
-                        Intent answer = new Intent(ESM.ACTION_AWARE_ESM_ANSWERED);
-                        answer.putExtra(ESM.EXTRA_ANSWER, rowData.getAsString(ESM_Provider.ESM_Data.ANSWER));
-                        getActivity().sendBroadcast(answer);
-
-                        if (Aware.DEBUG) Log.d(Aware.TAG, "Answer:" + rowData.toString());
-
-                        esm_dialog.dismiss();
-
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                    }
-                }
-            });
+            scale_submit.setOnClickListener(new SubmitAnswer());
         } catch (JSONException e) {
             e.printStackTrace();
         }

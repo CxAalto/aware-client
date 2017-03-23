@@ -110,35 +110,9 @@ public class ESM_Likert extends ESM_Question {
             ratingBar.setMax(getLikertMax());
             ratingBar.setStepSize((float) getLikertStep());
 
-            ratingBar.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    try {
-                        if (getExpirationThreshold() > 0 && expire_monitor != null)
-                            expire_monitor.cancel(true);
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                    }
-                }
-            });
 
-            TextView min_label = (TextView) ui.findViewById(R.id.esm_min);
-            min_label.setText(getLikertMinLabel());
-
-            TextView max_label = (TextView) ui.findViewById(R.id.esm_max);
-            max_label.setText(getLikertMaxLabel());
-
-            Button cancel = (Button) ui.findViewById(R.id.esm_cancel);
-            cancel.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    esm_dialog.cancel();
-                }
-            });
-            Button submit = (Button) ui.findViewById(R.id.esm_submit);
-            submit.setText(getSubmitButton());
-            submit.setOnClickListener(new View.OnClickListener() {
-                @Override
+            class SubmitAnswer implements View.OnClickListener {
+                //@Override
                 public void onClick(View v) {
 
                     try{
@@ -162,7 +136,40 @@ public class ESM_Likert extends ESM_Question {
                         e.printStackTrace();
                     }
                 }
+            }
+
+            class ClickAnswer implements View.OnClickListener {
+                @Override
+                public void onClick(View v) {
+                    try {
+                        if (getExpirationThreshold() > 0 && expire_monitor != null)
+                            expire_monitor.cancel(true);
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+            if (getOneClick())
+                ratingBar.setOnClickListener(new SubmitAnswer());
+            else
+                ratingBar.setOnClickListener(new ClickAnswer());
+
+            TextView min_label = (TextView) ui.findViewById(R.id.esm_min);
+            min_label.setText(getLikertMinLabel());
+
+            TextView max_label = (TextView) ui.findViewById(R.id.esm_max);
+            max_label.setText(getLikertMaxLabel());
+
+            Button cancel = (Button) ui.findViewById(R.id.esm_cancel);
+            cancel.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    esm_dialog.cancel();
+                }
             });
+            Button submit = (Button) ui.findViewById(R.id.esm_submit);
+            submit.setText(getSubmitButton());
+            submit.setOnClickListener(new SubmitAnswer());
         }catch (JSONException e) {
             e.printStackTrace();
         }

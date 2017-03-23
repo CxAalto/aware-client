@@ -89,8 +89,39 @@ public class ESM_Radio extends ESM_Question {
             TextView esm_instructions = (TextView) ui.findViewById(R.id.esm_instructions);
             esm_instructions.setText(getInstructions());
 
-            final RadioGroup radioOptions = (RadioGroup) ui.findViewById(R.id.esm_radio);
-            radioOptions.setOnClickListener(new View.OnClickListener() {
+            class SubmitAnswer implements View.OnClickListener {
+                @Override
+                public void onClick(View v) {
+                    try {
+                        if (getExpirationThreshold() > 0 && expire_monitor != null)
+                            expire_monitor.cancel(true);
+
+                        ContentValues rowData = new ContentValues();
+                        rowData.put(ESM_Provider.ESM_Data.ANSWER_TIMESTAMP, System.currentTimeMillis());
+
+                        RadioGroup radioOptions = (RadioGroup) ui.findViewById(R.id.esm_radio);
+                        if (radioOptions.getCheckedRadioButtonId() != -1) {
+                            RadioButton selected = (RadioButton) radioOptions.getChildAt(radioOptions.getCheckedRadioButtonId());
+                            rowData.put(ESM_Provider.ESM_Data.ANSWER, String.valueOf(selected.getText()).trim());
+                        }
+                        rowData.put(ESM_Provider.ESM_Data.STATUS, ESM.STATUS_ANSWERED);
+
+                        getContext().getContentResolver().update(ESM_Provider.ESM_Data.CONTENT_URI, rowData, ESM_Provider.ESM_Data._ID + "=" + getID(), null);
+
+                        Intent answer = new Intent(ESM.ACTION_AWARE_ESM_ANSWERED);
+                        answer.putExtra(ESM.EXTRA_ANSWER, rowData.getAsString(ESM_Provider.ESM_Data.ANSWER));
+                        getActivity().sendBroadcast(answer);
+
+                        if (Aware.DEBUG) Log.d(Aware.TAG, "Answer:" + rowData.toString());
+
+                        esm_dialog.dismiss();
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+
+            class ClickAnswer implements View.OnClickListener {
                 @Override
                 public void onClick(View v) {
                     try {
@@ -100,7 +131,13 @@ public class ESM_Radio extends ESM_Question {
                         e.printStackTrace();
                     }
                 }
-            });
+            }
+
+            final RadioGroup radioOptions = (RadioGroup) ui.findViewById(R.id.esm_radio);
+            if (getOneClick())
+                radioOptions.setOnClickListener(new SubmitAnswer());
+            else
+                radioOptions.setOnClickListener(new ClickAnswer());
 
             final JSONArray radios = getRadios();
             for (int i = 0; i < radios.length(); i++) {
@@ -154,37 +191,7 @@ public class ESM_Radio extends ESM_Question {
             });
             Button submit_radio = (Button) ui.findViewById(R.id.esm_submit);
             submit_radio.setText(getSubmitButton());
-            submit_radio.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    try {
-                        if (getExpirationThreshold() > 0 && expire_monitor != null)
-                            expire_monitor.cancel(true);
-
-                        ContentValues rowData = new ContentValues();
-                        rowData.put(ESM_Provider.ESM_Data.ANSWER_TIMESTAMP, System.currentTimeMillis());
-
-                        RadioGroup radioOptions = (RadioGroup) ui.findViewById(R.id.esm_radio);
-                        if (radioOptions.getCheckedRadioButtonId() != -1) {
-                            RadioButton selected = (RadioButton) radioOptions.getChildAt(radioOptions.getCheckedRadioButtonId());
-                            rowData.put(ESM_Provider.ESM_Data.ANSWER, String.valueOf(selected.getText()).trim());
-                        }
-                        rowData.put(ESM_Provider.ESM_Data.STATUS, ESM.STATUS_ANSWERED);
-
-                        getContext().getContentResolver().update(ESM_Provider.ESM_Data.CONTENT_URI, rowData, ESM_Provider.ESM_Data._ID + "=" + getID(), null);
-
-                        Intent answer = new Intent(ESM.ACTION_AWARE_ESM_ANSWERED);
-                        answer.putExtra(ESM.EXTRA_ANSWER, rowData.getAsString(ESM_Provider.ESM_Data.ANSWER));
-                        getActivity().sendBroadcast(answer);
-
-                        if (Aware.DEBUG) Log.d(Aware.TAG, "Answer:" + rowData.toString());
-
-                        esm_dialog.dismiss();
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                    }
-                }
-            });
+            submit_radio.setOnClickListener(new SubmitAnswer());
         } catch (JSONException e) {
             e.printStackTrace();
         }

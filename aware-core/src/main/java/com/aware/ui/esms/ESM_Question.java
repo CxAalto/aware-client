@@ -42,6 +42,7 @@ public class ESM_Question extends DialogFragment {
     public static final String esm_replace_queue = "esm_replace_queue";
     public static final String esm_trigger = "esm_trigger";
     public static final String esm_flows = "esm_flows";
+    public static final String esm_one_click = "esm_one_click";
     public static final String flow_user_answer = "user_answer";
     public static final String flow_next_esm = "next_esm";
 
@@ -291,6 +292,19 @@ public class ESM_Question extends DialogFragment {
         this.setFlows(new_flows);
         return this;
     }
+
+    /**
+     * Return: should this ESM be answered in only one click?
+     *
+     * @return if clicking an answer immediately moves to next.
+     * @throws JSONException if JSON error
+     */
+    public boolean getOneClick() throws JSONException {
+        if (! esm.has(esm_one_click))
+            return false;
+        return this.esm.getBoolean(esm_one_click);
+    }
+
 
     public JSONObject build() throws JSONException {
         JSONObject esm = new JSONObject();
