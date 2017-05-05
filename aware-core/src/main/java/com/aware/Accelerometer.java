@@ -303,8 +303,12 @@ public class Accelerometer extends Aware_Sensor implements SensorEventListener {
 
                 int MAX_BUFFER_DELAY_us = -1;
                 if (BUFFER_IO) {
-                    MAX_BUFFER_DELAY_us = FIFO_SIZE * new_frequency;
-                    MAX_BUFFER_DELAY_us = Math.min(MAX_BUFFER_DELAY_us, 10*1000000);
+                    // Be careful about integer overflows here!
+                    long limit1 = ((long)FIFO_SIZE) * ((long)new_frequency) - (long)2e6; // Based on buffer size+sample frequency
+                    long limit2 = 600*1000000;  // 10 min, global max limit
+                    MAX_BUFFER_DELAY_us = (int) Math.min(limit1, limit2);
+                    if (MAX_BUFFER_DELAY_us < 0)  MAX_BUFFER_DELAY_us = 1000000;  // Emergency check in case of overflows
+                    MAX_BUFFER_DELAY_us = Math.min(MAX_BUFFER_DELAY_us, 30*1000000);  // Override during testing
                     if (Aware.DEBUG) Log.d(TAG, "Accelerometer: buffer IO on, delay=" + MAX_BUFFER_DELAY_us + "us");
                 }
 
