@@ -1255,6 +1255,7 @@ public class Aware extends Service {
      * @param serverConfig
      */
     protected static void tweakSettings(Context c, JSONArray serverConfig) {
+        Log.d(TAG, "tweakSettings: running: ");
 
         boolean config_changed = false;
 
@@ -1316,6 +1317,7 @@ public class Aware extends Service {
                     for (int i = 0; i < enabled.length(); i++) {
                         try {
                             JSONObject sensor_config = enabled.getJSONObject(i);
+                            Log.d(TAG, "tweakSettings: enabled: " + sensor_config.getString("setting") + "=" +sensor_config.getString("value"));
                             if (sensor_config.getString("setting").contains("status")) {
                                 Aware.setSetting(c, sensor_config.getString("setting"), true, "com.aware.phone");
                             } else
@@ -1329,6 +1331,7 @@ public class Aware extends Service {
                     for (int i = 0; i < disabled.length(); i++) {
                         try {
                             JSONObject sensor_config = disabled.getJSONObject(i);
+                            Log.d(TAG, "tweakSettings: disabled: " + sensor_config.getString("setting") + "=" +sensor_config.getString("value"));
                             if (sensor_config.getString("setting").contains("status")) {
                                 Aware.setSetting(c, sensor_config.getString("setting"), false, "com.aware.phone");
                             } else
@@ -1339,6 +1342,8 @@ public class Aware extends Service {
                     }
 
                     if (enabled.length() > 0 || disabled.length() > 0) config_changed = true;
+                    Log.d(TAG, "tweakSettings: sensor changes enabled: " + enabled.toString());
+                    Log.d(TAG, "tweakSettings: sensor changes disabled: " + disabled.toString());
 
                     if (config_changed) {
                         //Update local study configuration
@@ -1385,6 +1390,7 @@ public class Aware extends Service {
                             JSONArray plugin_settings = plugin_config.getJSONArray("settings");
                             for (int j = 0; j < plugin_settings.length(); j++) {
                                 JSONObject plugin_set = plugin_settings.getJSONObject(j);
+                                Log.d(TAG, "tweakSettings: plugin set: " + plugin_set.getString("setting") + "=" + plugin_set.getString("value"));
                                 if (plugin_set.getString("setting").contains("status")) {
                                     Aware.setSetting(c, plugin_set.getString("setting"), true, package_name);
                                 } else
@@ -1403,6 +1409,7 @@ public class Aware extends Service {
                             JSONArray plugin_settings = plugin_config.getJSONArray("settings");
                             for (int j = 0; j < plugin_settings.length(); j++) {
                                 JSONObject plugin_set = plugin_settings.getJSONObject(j);
+                                Log.d(TAG, "tweakSettings: plugin unset: " + plugin_set.getString("setting") + "=" + plugin_set.getString("value"));
                                 if (plugin_set.getString("setting").contains("status")) {
                                     Aware.setSetting(c, plugin_set.getString("setting"), false, package_name);
                                 } else
@@ -1414,6 +1421,8 @@ public class Aware extends Service {
                     }
 
                     if (enabled.length() > 0 || disabled.length() > 0) config_changed = true;
+                    Log.d(TAG, "tweakSettings: plugin changes enabled: " + enabled.toString());
+                    Log.d(TAG, "tweakSettings: plugin changes disabled: " + disabled.toString());
 
                     if (config_changed) {
                         if (enabled.length() > 0 && !localConfig.getJSONObject(0).has("plugins")) {
@@ -1452,6 +1461,7 @@ public class Aware extends Service {
             Scheduler.setSchedules(c, schedulers);
 
         if (config_changed) {
+            Log.d(TAG, "tweakSettings: Config changed: restarting aware");
             ContentValues newCfg = new ContentValues();
             newCfg.put(Aware_Provider.Aware_Studies.STUDY_CONFIG, localConfig.toString());
             c.getContentResolver().update(Aware_Provider.Aware_Studies.CONTENT_URI, newCfg, Aware_Provider.Aware_Studies._ID + "=" + study_id, null);
