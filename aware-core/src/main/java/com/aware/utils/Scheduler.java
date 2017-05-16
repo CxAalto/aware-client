@@ -28,6 +28,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.Hashtable;
 import java.util.Locale;
+import java.util.Random;
 
 public class Scheduler extends Aware_Sensor {
 
@@ -1580,6 +1581,7 @@ public class Scheduler extends Aware_Sensor {
      */
     public static ArrayList<Long> random_times(Calendar start, Calendar end, int amount, int interval_minutes) {
         ArrayList<Long> randomList = new ArrayList<>();
+        Random rng = new Random(String.format("seed-ocxhbefuk-%d-%d", start.get(Calendar.YEAR), start.get(Calendar.DAY_OF_YEAR)).hashCode());
 
         long totalInterval = end.getTimeInMillis() - start.getTimeInMillis();
         long minDifferenceMillis = interval_minutes * 60 * 1000;
@@ -1587,7 +1589,7 @@ public class Scheduler extends Aware_Sensor {
 
         // Create random intervals without the minimum interval.
         while (randomList.size() < amount) {
-            long random = start.getTimeInMillis() + (long) (Math.random() * effectiveInterval);
+            long random = start.getTimeInMillis() + (long) (rng.nextDouble() * effectiveInterval);
             randomList.add(random);
         }
         // Sort and add the minimum intervals between all events.
