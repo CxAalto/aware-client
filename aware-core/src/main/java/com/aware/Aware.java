@@ -1441,9 +1441,10 @@ public class Aware extends Service {
         for (int i = 0; i < server.length(); i++) {
             JSONObject server_sensor = server.getJSONObject(i);
 
-            for (String optionalSensor : keys) {
-                if (server_sensor.getString("setting").equalsIgnoreCase(optionalSensor) && !listSensorType.containsKey(optionalSensors.get(optionalSensor)))
-                    continue;
+            //for (String optionalSensor : keys) {
+            //    if (server_sensor.getString("setting").equalsIgnoreCase(optionalSensor) && !listSensorType.containsKey(optionalSensors.get(optionalSensor)))
+            //        continue;
+            //}
 
             if (immutable_settings.contains(server_sensor.getString("setting"))) {
                 continue; //don't do anything
@@ -1469,10 +1470,10 @@ public class Aware extends Service {
                 continue; //don't do anything
             }
 
-            for (String optionalSensor : keys) {
-                if (local_sensor.getString("setting").equalsIgnoreCase(optionalSensor) && !listSensorType.containsKey(optionalSensors.get(optionalSensor)))
-                    continue;
-            }
+            //for (String optionalSensor : keys) {
+            //    if (local_sensor.getString("setting").equalsIgnoreCase(optionalSensor) && !listSensorType.containsKey(optionalSensors.get(optionalSensor)))
+            //        continue;
+            //}
 
             boolean remove = true;
             for (int i = 0; i < server.length(); i++) {
