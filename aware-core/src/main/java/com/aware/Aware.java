@@ -1295,6 +1295,7 @@ public class Aware extends Service {
         JSONArray localSensors = new JSONArray();
         JSONArray localPlugins = new JSONArray();
         JSONArray localSchedulers = new JSONArray();
+        Log.d(TAG, "tweakSettings: localConfig.length=" + localConfig.length());
         if (localConfig.length() > 0) {
             for (int i = 0; i < localConfig.length(); i++) {
                 try {
@@ -1311,7 +1312,11 @@ public class Aware extends Service {
             }
 
             try {
+                Log.d(TAG, "tweakSettings: sensorDiff server: " + sensors.toString());
+                Log.d(TAG, "tweakSettings: sensorDiff local: " + localSensors.toString());
                 ArrayList<JSONArray> sensorSync = sensorDiff(c, sensors, localSensors); //check sensors first
+                Log.d(TAG, "tweakSettings: sensorDiff enabled: " + sensorSync.get(0).toString());
+                Log.d(TAG, "tweakSettings: sensorDiff disabled: " + sensorSync.get(1).toString());
                 if (sensorSync.get(0).length() > 0 || sensorSync.get(1).length() > 0) {
                     JSONArray enabled = sensorSync.get(0);
                     for (int i = 0; i < enabled.length(); i++) {
