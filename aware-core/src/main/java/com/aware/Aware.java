@@ -326,6 +326,17 @@ public class Aware extends Service {
     private class AsyncStudyCheck extends AsyncTask<Void, Void, Boolean> {
         @Override
         protected Boolean doInBackground(Void... params) {
+            if (Aware.getSetting(getApplicationContext(), Aware_Preferences.WEBSERVICE_WIFI_ONLY).equals("true")) {
+                ConnectivityManager connManager = (ConnectivityManager) getApplicationContext().getSystemService(CONNECTIVITY_SERVICE);
+                NetworkInfo activeNetwork = connManager.getActiveNetworkInfo();
+                if (activeNetwork != null && activeNetwork.getType() == ConnectivityManager.TYPE_WIFI && activeNetwork.isConnected()) {
+                    // Wifi required and connected, proceed
+                } else if (Math.random() < .25) {
+                    // 25% chance of doing study_check even if not on wifi and it's required
+                } else {
+                    return true;
+                }
+            }
 
             //Ping AWARE's server with awareContext device's information for framework's statistics log
             Hashtable<String, String> studyCheck = new Hashtable<>();
