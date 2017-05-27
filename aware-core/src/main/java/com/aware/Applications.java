@@ -290,7 +290,7 @@ public class Applications extends AccessibilityService {
             mBuilder.setDefaults(NotificationCompat.DEFAULT_ALL);
 
             if (Aware.isStudy(this)) {
-                mBuilder.addAction(R.drawable.ic_stat_aware_sync, getApplicationContext().getResources().getString(R.string.foreground_notification_sync_text), onSync);
+                //mBuilder.addAction(R.drawable.ic_stat_aware_sync, getApplicationContext().getResources().getString(R.string.foreground_notification_sync_text), onSync);
             }
 
             startForeground(Aware.AWARE_FOREGROUND_SERVICE, mBuilder.build());
