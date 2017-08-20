@@ -259,6 +259,7 @@ public class Aware extends Service {
 
         IntentFilter scheduler = new IntentFilter();
         scheduler.addAction(Intent.ACTION_TIME_TICK);
+        schedulerTicker.interval_ms = 60000 * getApplicationContext().getResources().getInteger(R.integer.alarm_wakeup_interval_min);
         registerReceiver(schedulerTicker, scheduler);
 
         if (!Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
@@ -342,12 +343,20 @@ public class Aware extends Service {
 
     private final SchedulerTicker schedulerTicker = new SchedulerTicker();
     public class SchedulerTicker extends BroadcastReceiver {
+        long last_time = 0;
+        long interval_ms = 60000; // Set in Aware class where we have context
         @Override
         public void onReceive(Context context, Intent intent) {
             if (intent.getAction().equals(Intent.ACTION_TIME_TICK)) { //Executed every 1-minute. OS will send this tickle automatically
-                Intent scheduler = new Intent(context, Scheduler.class);
-                scheduler.setAction(Scheduler.ACTION_AWARE_SCHEDULER_CHECK);
-                context.startService(scheduler);
+                long ts = System.currentTimeMillis();
+                // Subtract 30s.  The ticker only is every minute anyway, this gives us some
+                // slack in case the interval is slightly less than 60000ms.
+                if (ts > last_time + interval_ms - 30000) {
+                    last_time = ts;
+                    Intent scheduler = new Intent(context, Scheduler.class);
+                    scheduler.setAction(Scheduler.ACTION_AWARE_SCHEDULER_CHECK);
+                    context.startService(scheduler);
+                }
             }
         }
     }
@@ -457,7 +466,7 @@ public class Aware extends Service {
                     }
 
                     //Ignored by standalone apps. They handle their own sensors, so server settings do not apply.
-                    if (!getResources().getBoolean(R.bool.standalone)) {
+                    if (getPackageName().equals("com.aware.phone") || !getResources().getBoolean(R.bool.standalone)) {
                         if (study.getString("config").equalsIgnoreCase("[]")) {
                             Aware.tweakSettings(getApplicationContext(), new JSONArray(study.getString("config")));
                         } else if (!study.getString("config").equalsIgnoreCase("[]")) {
@@ -1412,14 +1421,14 @@ public class Aware extends Service {
             }
         }
 
+        //Set schedulers
+        if (schedulers.length() > 0)
+            Scheduler.setSchedules(c, schedulers);
+
         if (config_changed) {
             ContentValues newCfg = new ContentValues();
             newCfg.put(Aware_Provider.Aware_Studies.STUDY_CONFIG, localConfig.toString());
             c.getContentResolver().update(Aware_Provider.Aware_Studies.CONTENT_URI, newCfg, Aware_Provider.Aware_Studies._ID + "=" + study_id, null);
-
-            //Set schedulers
-            if (schedulers.length() > 0)
-                Scheduler.setSchedules(c, schedulers);
 
             Intent aware = new Intent(c, Aware.class);
             c.startService(aware);
