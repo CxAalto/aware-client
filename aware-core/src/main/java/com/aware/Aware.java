@@ -373,6 +373,7 @@ public class Aware extends Service {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
                 mBuilder.setChannelId(Aware.AWARE_NOTIFICATION_ID);
 
+            Log.d(TAG, "xxx: starting in foreground");
             startForeground(Aware.AWARE_FOREGROUND_SERVICE, mBuilder.build());
         } else {
             stopForeground(true);
@@ -385,6 +386,7 @@ public class Aware extends Service {
         long interval_ms = 60000; // Set in Aware class where we have context
         @Override
         public void onReceive(Context context, Intent intent) {
+            Log.d(TAG, "xxx: schedulerTicker");
             if (intent.getAction().equals(Intent.ACTION_TIME_TICK)) { //Executed every 1-minute. OS will send this tickle automatically
                 long ts = System.currentTimeMillis();
                 // Subtract 30s.  The ticker only is every minute anyway, this gives us some
@@ -2204,6 +2206,7 @@ public class Aware extends Service {
     public static class AwareBoot extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
+            Log.d(TAG, "xxx: awareBoot");
             boolean logging = false;
             if ((context.getPackageName().equalsIgnoreCase("com.aware.phone") || context.getApplicationContext().getResources().getBoolean(R.bool.standalone))) {
                 logging = true;

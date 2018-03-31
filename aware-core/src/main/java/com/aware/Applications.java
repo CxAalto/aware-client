@@ -393,6 +393,7 @@ public class Applications extends AccessibilityService {
             TAG = Aware.getSetting(this, Aware_Preferences.DEBUG_TAG);
 
             if (DEBUG) Log.d(Aware.TAG, "Aware service connected to accessibility services...");
+            if (DEBUG) Log.d(Aware.TAG, "xxx: accessibilty secvices started");
 
             //This makes sure that plugins and apps can check if the accessibility service is active
             Aware.setSetting(this, Applications.STATUS_AWARE_ACCESSIBILITY, true);

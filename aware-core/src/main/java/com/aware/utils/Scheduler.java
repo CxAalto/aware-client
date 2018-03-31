@@ -620,6 +620,7 @@ public class Scheduler extends Aware_Sensor {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         super.onStartCommand(intent, flags, startId);
+        Log.d(TAG, "xxx: scheduler check (tick)");
 
         if (PERMISSIONS_OK) {
 
