@@ -55,5 +55,9 @@
     <string name="sensor_communications">Communications (call/text)</string>
     <string name="sensor_keyboard">Keyboard</string>
     <string name="sensor_significant">Significant motion</string>
+    <string name="sync_syncing_notification">Table: %s syncing batch %d of %d</string>
+    <string name="sync_syncing_done">Finished syncing %s. Thanks!</string>
+    <string name="sync_low_memory_title">Low memory detected...</string>
+    <string name="sync_low_memory_text">Tap and swipe to clear recently used applications.</string>
 
 </resources>
