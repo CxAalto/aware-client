@@ -201,7 +201,7 @@ public class AwareSyncAdapter extends AbstractThreadedSyncAdapter {
 
                     do {
                         if (!Aware.getSetting(context, Aware_Preferences.WEBSERVICE_SILENT).equals("true"))
-                            notifyUser(context, "Table: " + database_table + " syncing batch " + (uploaded_records + MAX_POST_SIZE) / MAX_POST_SIZE + " of " + batches, false, true, notificationID);
+                            notifyUser(context, String.format(context.getString(R.string.sync_syncing_notification), database_table, (uploaded_records + MAX_POST_SIZE) / MAX_POST_SIZE, batches), false, true, notificationID);
 
                         Cursor sync_data = getSyncData(remoteLatestData, CONTENT_URI, study_condition, columnsStr, uploaded_records, context, MAX_POST_SIZE);
                         lastSynced = syncBatch(sync_data, database_table, device_id, context, protocol, web_server, DEBUG);
@@ -224,7 +224,7 @@ public class AwareSyncAdapter extends AbstractThreadedSyncAdapter {
                         Log.d(Aware.TAG, database_table + " sync time: " + DateUtils.formatElapsedTime((System.currentTimeMillis() - start) / 1000));
 
                     if (!Aware.getSetting(context, Aware_Preferences.WEBSERVICE_SILENT).equals("true")) {
-                        notifyUser(context, "Finished syncing " + database_table + ". Thanks!", true, false, notificationID);
+                        notifyUser(context, String.format(context.getString(R.string.sync_syncing_done), database_table), true, false, notificationID);
                     }
                 }
             } catch (Exception e) {
@@ -272,8 +272,8 @@ public class AwareSyncAdapter extends AbstractThreadedSyncAdapter {
         if (memInfo.lowMemory) {
             NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(getContext(), Aware.AWARE_NOTIFICATION_ID);
             mBuilder.setSmallIcon(R.drawable.ic_stat_aware_plugin_dependency);
-            mBuilder.setContentTitle("Low memory detected...");
-            mBuilder.setContentText("Tap and swipe to clear recently used applications.");
+            mBuilder.setContentTitle(mContext.getString(R.string.sync_low_memory_title));
+            mBuilder.setContentText(mContext.getString(R.string.sync_low_memory_text));
             mBuilder.setAutoCancel(true);
             mBuilder.setOnlyAlertOnce(true);
             mBuilder.setDefaults(NotificationCompat.DEFAULT_ALL);
