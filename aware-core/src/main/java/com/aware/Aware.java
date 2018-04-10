@@ -622,6 +622,7 @@ public class Aware extends Service {
                     && study.getDouble(study.getColumnIndex(Aware_Provider.Aware_Studies.STUDY_JOINED)) > 0); //joined and still enrolled
         }
         if (study != null && !study.isClosed()) study.close();
+        Log.d(TAG, "xxx: in study: " + participant);
         return participant;
     }
 

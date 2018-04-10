@@ -92,6 +92,7 @@ public class AwareSyncAdapter extends AbstractThreadedSyncAdapter {
      */
     @Override
     public void onPerformSync(Account account, Bundle extras, String authority, ContentProviderClient provider, SyncResult syncResult) {
+        Log.d("AWARE SYNC", "xxx: sync being preformed");
         //Restores core AWARE service in case it get's killed
         if (!Aware.IS_CORE_RUNNING) {
             Intent aware = new Intent(mContext, Aware.class);
@@ -112,6 +113,7 @@ public class AwareSyncAdapter extends AbstractThreadedSyncAdapter {
 
         //Fixed: not part of a study, do nothing
         if (web_server.length() == 0 || web_server.equalsIgnoreCase("https://api.awareframework.com/index.php")) {
+            Log.d("AWARE:sync", "Not in study, skipping upload");
             return;
         }
 
