@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">AWARE</string>
-    <string name="aware_esm_questions_title">AWARE</string>
+    <string name="app_name">Mobiiliapplikaatiotutkimus</string>
+    <string name="aware_esm_questions_title">Mobiiliapplikaatiotutkimus</string>
     <string name="aware_esm_questions">Napauta tätä vastataksesi</string>
-    <string name="aware_activate_accessibility_title">Ota käyttöön AWARE</string>
+    <string name="aware_activate_accessibility_title">Ota käyttöön Mobiiliapplikaatiotutkimus</string>
     <string name="aware_activate_accessibility">Napauta tätä ottaaksesi käyttöösi esteettömän palvelun.</string>
     <string name="aware_activate_battery_optimize_ignore_title">Mobiiliapplikaatiotutkimus Akun Käytön Optimointi</string>
     <string name="aware_activate_battery_optimize_ignore">Napauta ja lisää huomiotta akun optimointi luettelo.</string>
     <string name="aware_battery_recharge">Lataa uudelleen puhelimesi mahdollisimman pian.</string>
-    <string name="foreground_notification_title">AWARE</string>
+    <string name="foreground_notification_title">Mobiiliapplikaatiotutkimus</string>
     <string name="foreground_notification_text">Tietojenkeruu on aktiivinen</string>
 </resources>
