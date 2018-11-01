@@ -692,7 +692,7 @@ public class Aware extends Service {
             get_device_info();
 
             if (Aware.getSetting(getApplicationContext(), Aware_Preferences.AWARE_DONATE_USAGE).equals("true")) {
-                new AsyncPing().execute();
+                //new AsyncPing().execute();  /* disabled */
             }
 
             //only the client and self-contained apps need to run the keep alive. Plugins are handled by them.

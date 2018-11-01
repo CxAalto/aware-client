@@ -219,8 +219,8 @@ public class Aware_Client extends Aware_Activity implements SharedPreferences.On
                 check.setChecked(Aware.getSetting(getApplicationContext(), pref.getKey()).equals("true"));
                 if (check.isChecked()) {
                     if (pref.getKey().equalsIgnoreCase(Aware_Preferences.AWARE_DONATE_USAGE)) {
-                        Toast.makeText(getApplicationContext(), "Thanks!", Toast.LENGTH_SHORT).show();
-                        new AsyncPing().execute();
+                        //Toast.makeText(getApplicationContext(), "Thanks!", Toast.LENGTH_SHORT).show();
+                        //new AsyncPing().execute();  /* disabled */
                     }
                     if (pref.getKey().equalsIgnoreCase(Aware_Preferences.STATUS_WEBSERVICE)) {
                         if (Aware.getSetting(getApplicationContext(), Aware_Preferences.WEBSERVICE_SERVER).length() == 0) {
