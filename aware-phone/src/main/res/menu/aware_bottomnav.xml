@@ -5,18 +5,18 @@
         android:enabled="true"
         android:id="@+id/aware_sensors"
         android:icon="@drawable/ic_action_aware_sensors"
-        android:title="Sensors"
+        android:title="@string/aware_sensors"
         app:showAsAction="always" />
     <item
         android:enabled="true"
         android:id="@+id/aware_plugins"
         android:icon="@drawable/ic_action_aware_plugins"
-        android:title="Plugins"
+        android:title="@string/aware_plugins"
         app:showAsAction="always" />
     <item
         android:enabled="true"
         android:id="@+id/aware_stream"
         android:icon="@drawable/ic_action_aware_stream"
-        android:title="Stream"
+        android:title="@string/aware_stream"
         app:showAsAction="always" />
 </menu>

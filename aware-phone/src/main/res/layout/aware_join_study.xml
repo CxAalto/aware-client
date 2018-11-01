@@ -40,14 +40,14 @@
                         android:id="@+id/txt_description"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Description" />
+                        android:text="@string/join_description" />
 
                     <TextView
                         android:id="@+id/txt_researcher"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="15dp"
-                        android:text="Researcher" />
+                        android:text="@string/join_researcher" />
                 </LinearLayout>
             </ScrollView>
         </LinearLayout>
@@ -95,7 +95,7 @@
             android:layout_marginRight="5dp"
             android:layout_marginEnd="5dp"
             android:background="@android:color/holo_red_light"
-            android:text="Quit study"
+            android:text="@string/join_quit_study"
             android:textColor="@android:color/white" />
 
         <Button

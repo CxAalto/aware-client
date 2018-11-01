@@ -4,7 +4,7 @@
     <item
         android:id="@+id/aware_study_info"
         android:icon="@drawable/ic_action_aware_studies"
-        android:title="Study"
+        android:title="@string/aware_study"
         app:showAsAction="always" />
     <item
         android:id="@+id/aware_sync"

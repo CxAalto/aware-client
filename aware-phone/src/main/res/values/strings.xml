@@ -2,4 +2,11 @@
 <resources>
     <string name="sensor_accelerometer">Accelerometer</string>
     <string name="sensor_applications">Applications</string>
+    <string name="aware_study">Study</string>
+    <string name="aware_sensors">Sensors</string>
+    <string name="aware_plugins">Plugins</string>
+    <string name="aware_stream">Stream</string>
+    <string name="join_researcher">Researcher</string>
+    <string name="join_description">Description</string>
+    <string name="join_quit_study">Quit study</string>
 </resources>
