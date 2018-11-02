@@ -42,7 +42,7 @@
             android:layout_height="wrap_content"
             android:layout_gravity="bottom"
             android:layout_weight="1"
-            android:text="Cancel" />
+            android:text="@string/esm_button_cancel" />
 
         <Button
             android:id="@+id/esm_submit"
