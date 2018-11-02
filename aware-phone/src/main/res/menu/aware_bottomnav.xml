@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
-    <item
+<!--    <item
         android:enabled="true"
         android:id="@+id/aware_sensors"
         android:icon="@drawable/ic_action_aware_sensors"
@@ -18,5 +18,5 @@
         android:id="@+id/aware_stream"
         android:icon="@drawable/ic_action_aware_stream"
         android:title="@string/aware_stream"
-        app:showAsAction="always" />
+        app:showAsAction="always" />-->
 </menu>

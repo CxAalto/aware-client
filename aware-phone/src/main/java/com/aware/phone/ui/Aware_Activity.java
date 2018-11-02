@@ -56,6 +56,7 @@ public abstract class Aware_Activity extends AppCompatPreferenceActivity {
                 @Override
                 public boolean onNavigationItemSelected(@NonNull MenuItem item) {
                     switch (item.getItemId()) {
+/*
                         case R.id.aware_sensors: //Sensors
                             Intent sensors_ui = new Intent(getApplicationContext(), Aware_Client.class);
                             startActivity(sensors_ui);
@@ -73,6 +74,7 @@ public abstract class Aware_Activity extends AppCompatPreferenceActivity {
                             Intent stream_ui = new Intent(getApplicationContext(), Stream_UI.class);
                             startActivity(stream_ui);
                             break;
+*/
                     }
                     return true;
                 }
