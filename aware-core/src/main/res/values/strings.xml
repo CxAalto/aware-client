@@ -60,5 +60,171 @@
     <string name="sync_low_memory_title">Low memory detected...</string>
     <string name="sync_low_memory_text">Tap and swipe to clear recently used applications.</string>
     <string name="esm_button_cancel">Cancel</string>
+    <string name="pref_device_section">Device</string>
+    <string name="pref_device_id">AWARE Device ID</string>
+    <string name="pref_device_label">Device label</string>
+    <string name="pref_aware_version">AWARE version</string>
+    <string name="pref_ping">Ping AWARE server</string>
+    <string name="pref_ping_summary">Used for diagnostics and analytics (e.g., server demand)</string>
+    <string name="pref_activate">Activate</string>
+    <string name="pref_frequency_enforce">Enforce the frequency</string>
+    <string name="pref_frequency_enforce_summary">If Android gives points more often than frequency, ignore them.</string>
+    <string name="pref_sampling_rate">Sampling rate</string>
+    <string name="pref_threshold_summary_3d"><![CDATA[e.g., log only if [x,y,z] >= 0.01]]></string>
+
+    <string name="pref_sensors_section">Sensors</string>
+    <string name="pref_sensors_section_summary">AWARE default sensors</string>
+    <string name="pref_accelerometer">Accelerometer</string>
+    <string name="pref_accelerometer_summary">Acceleration, including the force of gravity (m/s^2)</string>
+    <string name="pref_accelerometer_threshold">Sensitivity (0 = disabled)</string>
+    <string name="pref_applications">Applications</string>
+    <string name="pref_applications_usage">Application usage</string>
+    <string name="pref_applications_background_processes">Background processes</string>
+    <string name="pref_applications_installations">Application installations</string>
+    <string name="pref_applications_keyboard">Keyboard</string>
+    <string name="pref_applications_notifications">Application notifications</string>
+    <string name="pref_application_crashes">Application crashes</string>
+    <string name="pref_application_crashes_summary">Log crashes (error and ANR), with ADB trace</string>
+    <string name="pref_applications_keyboard_summary">Logs keyboard input (no passwords)</string>
+    <string name="pref_applications_installations_summary">Application installs, uninstalls and updates</string>
+    <string name="pref_applications_background_processes_summary">Update every X minute(s). 0 to disable.</string>
+    <string name="pref_applications_usage_summary">Current visible and background applications</string>
+    <string name="pref_applications_summary">Application usage</string>
+    <string name="pref_applications_notifications_summary">Notifications sent by any application, without text content</string>
+    <string name="pref_barometer">Barometer</string>
+    <string name="pref_barometer_summary">Atmospheric air pressure (mbar/hPa)</string>
+    <string name="pref_threshold">Sensitivity (0 = disabled)</string>
+    <string name="pref_battery">Battery</string>
+    <string name="pref_battery_summary">Battery and power events</string>
+    <string name="pref_bluetooth">Bluetooth</string>
+    <string name="pref_bluetooth_summary">Bluetooth sensing</string>
+    <string name="pref_bluetooth_frequency">Scanning update frequency</string>
+    <string name="pref_bluetooth_frequency_summary">X seconds</string>
+    <string name="pref_communication">Communication</string>
+    <string name="pref_communication_summary">Communication usage (calls/messages)</string>
+    <string name="pref_communication_calls">Call events</string>
+    <string name="pref_communication_calls_summary">Calls made, received, missed</string>
+    <string name="pref_communication_sms">Message events</string>
+    <string name="pref_communication_sms_summary">Sent or received SMS/MMS</string>
+    <string name="pref_esm">Mobile ESM/EMA</string>
+    <string name="pref_esm_summary">Mobile questionnaires</string>
+    <string name="pref_esm_activate_summary">Allow remote and applications ESM requests for human-based sensing</string>
+    <string name="pref_gravity">Gravity</string>
+    <string name="pref_gravity_summary">Force of gravity as a 3D vector with direction and magnitude of gravity (m/s^2)</string>
+    <string name="pref_gravity_threshold_summary"><![CDATA[e.g., log only if [x,y,z] >= 0.01]]></string>
+    <string name="pref_gyroscope">Gyroscope</string>
+    <string name="pref_gyroscope_summary">Rate of rotation of device (rad/s)</string>
+    <string name="pref_light">Light</string>
+    <string name="pref_light_summary">Ambient light (lux)</string>
+    <string name="pref_linear_acc">Linear accelerometer</string>
+    <string name="pref_linear_acc_summary">Acceleration, w/o gravity (m/s^2)</string>
+    <string name="pref_locations">Locations</string>
+    <string name="pref_locations_summary">User\'s estimated location by GPS and network triangulation</string>
+    <string name="pref_locations_gps">GPS</string>
+    <string name="pref_locations_gps_summary">GPS location tracking</string>
+    <string name="pref_locations_gps_frequency">Minimum GPS update frequency</string>
+    <string name="pref_locations_gps_frequency_summary">Seconds (0 = always on)</string>
+    <string name="pref_locations_gps_threshold">Movement threshold for GPS updates</string>
+    <string name="pref_locations_gps_threshold_summary">Meters (0 = always on)</string>
+    <string name="pref_locations_triangulation">Triangulation (cell tower and Wi-Fi)</string>
+    <string name="pref_locations_triangulation_summary">Triangulation location tracking</string>
+    <string name="pref_locations_triangulation_frequency">Minimum triangulation update frequency</string>
+    <string name="pref_locations_triangulation_frequency_summary">Seconds (0 = always on)</string>
+    <string name="pref_locations_triangulation_threshodl">Movement threshold for triangulation updates</string>
+    <string name="pref_locations_triangulation_threshold_summary">Meters (0 = always on)</string>
+    <string name="pref_locations_passive">Passive location provider</string>
+    <string name="pref_locations_passive_summary">Don\'t fetch locations, but use locations if other apps request them.</string>
+    <string name="pref_locations_lifetime">Location fix lifetime</string>
+    <string name="pref_locations_lifetime_summary">Expire after X seconds</string>
+    <string name="pref_locations_saveall">Save all locations</string>
+    <string name="pref_locations_saveall_summary">Don\'t use heuristics to only record best locations</string>
+    <string name="pref_network">Network</string>
+    <string name="pref_network_summary">Network usage and traffic</string>
+    <string name="pref_network_events">Network events</string>
+    <string name="pref_network_events_summary">Network usage states</string>
+    <string name="pref_network_traffic">Network traffic</string>
+    <string name="pref_network_traffic_summary"><![CDATA[Wi-Fi & mobile network traffic (bytes,packets)]]></string>
+    <string name="pref_magnetometer">Magnetometer</string>
+    <string name="pref_magnetometer_summary">Geomagnetic field strength around the device (µT)</string>
+    <string name="pref_processor">Processor workload</string>
+    <string name="pref_processor_summary">CPU workload for user, system and idle (%)</string>
+    <string name="pref_processor_frequency">Update frequency</string>
+    <string name="pref_processor_frequency_summary">Every X seconds</string>
+    <string name="pref_timezone">Timezone</string>
+    <string name="pref_timezone_summary">Tracks user\'s current timezone</string>
+    <string name="pref_proximity">Proximity</string>
+    <string name="pref_proximity_summary">Proximity sensor distance (HW-dependent value for far and near)</string>
+    <string name="pref_rotation">Rotation</string>
+    <string name="pref_rotation_summary">Orientation of the device in all axis</string>
+    <string name="pref_screen">Screen usage</string>
+    <string name="pref_screen_summary">Screen events (on, off, locked, unlocked)</string>
+    <string name="pref_screen_activate_summary">Capture screen events (on, off, locked, unlocked)</string>
+    <string name="pref_screen_interaction">Screen interaction</string>
+    <string name="pref_screen_interaction_summary">Capture clicks, long clicks and scroll up/down events</string>
+    <string name="pref_sigmotion">Significant motion</string>
+    <string name="pref_sigmotion_activate_summary">Log motion events. Saves battery life, stops motion sensors logs if idle!</string>
+    <string name="pref_temp">Temperature</string>
+    <string name="pref_temp_summary">Ambient air temperature (Celsius)</string>
+    <string name="pref_telephony">Telephony</string>
+    <string name="pref_telephony_summary">Cell operator, current cell tower and neighbor towers</string>
+    <string name="pref_telephony_activate_summary">Cell operator, current cell tower and neighbor towers</string>
+    <string name="pref_wifi">Wi-Fi</string>
+    <string name="pref_wifi_summary">Wi-Fi sensing</string>
+    <string name="pref_wifi_frequency">Wi-Fi scanning update frequency</string>
+    <string name="pref_wifi_frequency_summary">Every X seconds. Default 60 seconds (recommended)</string>
+
+    <string name="pref_section_contentexchange">Context exchange protocols</string>
+    <string name="pref_section_contentexchange_summary">Webservices, MQTT</string>
+    <string name="pref_mqtt">MQTT Server</string>
+    <string name="pref_mqtt_summary">Allows remove questionnaires, P2P context exchange</string>
+    <string name="pref_mqtt_connect">Connect</string>
+    <string name="pref_mqtt_server">MQTT server</string>
+    <string name="pref_mqtt_server_summary">URL/IP address</string>
+    <string name="pref_mqtt_port">MQTT port</string>
+    <string name="pref_mqtt_port_summary">Non-encrypted: 1883, encrypted: 8883</string>
+    <string name="pref_mqtt_username">MQTT username</string>
+    <string name="pref_mqtt_username_summary">User credentials username</string>
+    <string name="pref_mqtt_password">MQTT password</string>
+    <string name="pref_mqtt_password_summary">User credentials password</string>
+    <string name="pref_mqtt_keepalive">MQTT keep alive</string>
+    <string name="pref_mqtt_keepalive_summary">Every X seconds</string>
+    <string name="pref_mqtt_qos">MQTT QoS</string>
+    <string name="pref_mqtt_qos_summary">0 - No guarantee, 1 - At least once, 2 - Exactly once (default = 2)</string>
+
+    <string name="pref_section_study">AWARE Study</string>
+    <string name="pref_section_study_summary">Study and sync settings</string>
+    <string name="pref_study_url">Study URL</string>
+    <string name="pref_study_url_summary">URL</string>
+    <string name="pref_study_wifionly">Wi-Fi only</string>
+    <string name="pref_study_wifionly_summary">Sync only over Wi-Fi</string>
+    <string name="pref_study_wifionly_fallback">Fallback to 3G after x hours</string>
+    <string name="pref_study_chargingonly">Charging only</string>
+    <string name="pref_study_chargingonly_summary">Sync only if charging</string>
+    <string name="pref_study_syncinterval">Sync interval (0 to disable)</string>
+    <string name="pref_study_syncinterval_summary">Every X minutes</string>
+    <string name="pref_study_cleanupinterval">Clean-up old data?</string>
+    <string name="pref_study_quietsync">Quiet sync</string>
+    <string name="pref_study_quietsync_summary">Disable data sync notifications</string>
+    <string name="pref_study_batteryreminder">Battery reminder</string>
+    <string name="pref_study_batteryreminder_summary">Remind to charge when 15%</string>
+    <string name="pref_study_foreground">Foreground priority</string>
+    <string name="pref_study_foreground_summary">RECOMMENDED to keep AWARE running non-stop.</string>
+
+    <string name="pref_section_advanced">Advanced</string>
+    <string name="pref_section_advanced_summary">Advanced</string>
+    <string name="pref_advancedoptions">Advanced options</string>
+    <string name="pref_advancedoptions_summary">For advanced users and developers</string>
+    <string name="pref_advancedoptions_debugging">Debugging</string>
+    <string name="pref_advancedoptions_debugging_summary">Show messages in logcat</string>
+    <string name="pref_advancedoptions_logcattag">Logcat TAG</string>
+    <string name="pref_advancedoptions_logcattag_summary">Change logcat tag for debug filters (default = AWARE)</string>
+    <string name="pref_advancedoptions_lightweight">Lightweight sampling</string>
+    <string name="pref_advancedoptions_lightweight_summary">Disable database logs for high-frequency sensors</string>
+    <string name="pref_advancedoptions_webservicesimple">Simple webservice</string>
+    <string name="pref_advancedoptions_webservicesimple_summary">Disable database metadata sync to server</string>
+    <string name="pref_advancedoptions_wipe">Wipe data on upload</string>
+    <string name="pref_advancedoptions_wipe_summary">WARNING: This may cause problems with some sensors or plugins if they rely on history data (e.g., battery charges, discharges, ...)</string>
+    <string name="pref_advancedoptions_enforce_frequency_all">Enforce frequency of all sensors</string>
+    <string name="pref_advancedoptions_enforce_frequency_all_summary">If Android gives points more often than the requested frequency, ignore them.</string>
 
 </resources>
