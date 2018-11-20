@@ -2,5 +2,5 @@
 <resources>
     <item name="accessibility_access" type="bool" format="boolean">false</item>
     <item name="standalone" type="bool" format="boolean">false</item>
-    <item name="internalstorage" type="bool" format="boolean">false</item>
+    <item name="internalstorage" type="bool" format="boolean">true</item>
 </resources>
