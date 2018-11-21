@@ -6,29 +6,29 @@
     <PreferenceCategory
         android:key="device_ids"
         android:title="@string/pref_device_section">
-        <EditTextPreference
-            android:key="device_id"
-            android:persistent="true"
-            android:selectable="false"
-            android:summary="%s"
-            android:title="@string/pref_device_id" />
+        <!--<EditTextPreference-->
+            <!--android:key="device_id"-->
+            <!--android:persistent="true"-->
+            <!--android:selectable="false"-->
+            <!--android:summary="%s"-->
+            <!--android:title="@string/pref_device_id" />-->
         <EditTextPreference
             android:key="device_label"
             android:persistent="true"
             android:summary="%s"
             android:title="@string/pref_device_label" />
-        <EditTextPreference
-            android:key="aware_version"
-            android:persistent="true"
-            android:selectable="false"
-            android:summary="%s"
-            android:title="@string/pref_aware_version" />
-        <CheckBoxPreference
-            android:defaultValue="false"
-            android:key="aware_donate_usage"
-            android:persistent="true"
-            android:summary="@string/pref_ping_summary"
-            android:title="@string/pref_ping" />
+        <!--<EditTextPreference-->
+            <!--android:key="aware_version"-->
+            <!--android:persistent="true"-->
+            <!--android:selectable="false"-->
+            <!--android:summary="%s"-->
+            <!--android:title="@string/pref_aware_version" />-->
+        <!--<CheckBoxPreference-->
+            <!--android:defaultValue="false"-->
+            <!--android:key="aware_donate_usage"-->
+            <!--android:persistent="true"-->
+            <!--android:summary="@string/pref_ping_summary"-->
+            <!--android:title="@string/pref_ping" />-->
     </PreferenceCategory>
     <PreferenceCategory
         android:key="sensors"
@@ -885,60 +885,60 @@
         </PreferenceScreen>
     </PreferenceCategory>
 
-    <PreferenceCategory
-        android:key="advanced_settings"
-        android:summary="@string/pref_section_advanced_summary"
-        android:title="@string/pref_section_advanced">
-        <PreferenceScreen
-            android:key="advanced"
-            android:summary="@string/pref_advancedoptions_summary"
-            android:title="@string/pref_advancedoptions">
+    <!--<PreferenceCategory-->
+        <!--android:key="advanced_settings"-->
+        <!--android:summary="@string/pref_section_advanced_summary"-->
+        <!--android:title="@string/pref_section_advanced">-->
+        <!--<PreferenceScreen-->
+            <!--android:key="advanced"-->
+            <!--android:summary="@string/pref_advancedoptions_summary"-->
+            <!--android:title="@string/pref_advancedoptions">-->
 
-            <CheckBoxPreference
-                android:defaultValue="true"
-                android:key="debug_flag"
-                android:persistent="true"
-                android:summary="@string/pref_advancedoptions_debugging_summary"
-                android:title="@string/pref_advancedoptions_debugging" />
+            <!--<CheckBoxPreference-->
+                <!--android:defaultValue="true"-->
+                <!--android:key="debug_flag"-->
+                <!--android:persistent="true"-->
+                <!--android:summary="@string/pref_advancedoptions_debugging_summary"-->
+                <!--android:title="@string/pref_advancedoptions_debugging" />-->
 
-            <EditTextPreference
-                android:defaultValue="AWARE"
-                android:dependency="debug_flag"
-                android:key="debug_tag"
-                android:persistent="true"
-                android:summary="@string/pref_advancedoptions_logcattag_summary"
-                android:title="@string/pref_advancedoptions_logcattag" />
+            <!--<EditTextPreference-->
+                <!--android:defaultValue="AWARE"-->
+                <!--android:dependency="debug_flag"-->
+                <!--android:key="debug_tag"-->
+                <!--android:persistent="true"-->
+                <!--android:summary="@string/pref_advancedoptions_logcattag_summary"-->
+                <!--android:title="@string/pref_advancedoptions_logcattag" />-->
 
-            <CheckBoxPreference
-                android:defaultValue="false"
-                android:key="debug_db_slow"
-                android:persistent="true"
-                android:summary="@string/pref_advancedoptions_lightweight_summary"
-                android:title="@string/pref_advancedoptions_lightweight" />
+            <!--<CheckBoxPreference-->
+                <!--android:defaultValue="false"-->
+                <!--android:key="debug_db_slow"-->
+                <!--android:persistent="true"-->
+                <!--android:summary="@string/pref_advancedoptions_lightweight_summary"-->
+                <!--android:title="@string/pref_advancedoptions_lightweight" />-->
 
-            <CheckBoxPreference
-                android:defaultValue="false"
-                android:key="webservice_simple"
-                android:persistent="true"
-                android:summary="@string/pref_advancedoptions_webservicesimple_summary"
-                android:title="@string/pref_advancedoptions_webservicesimple" />
+            <!--<CheckBoxPreference-->
+                <!--android:defaultValue="false"-->
+                <!--android:key="webservice_simple"-->
+                <!--android:persistent="true"-->
+                <!--android:summary="@string/pref_advancedoptions_webservicesimple_summary"-->
+                <!--android:title="@string/pref_advancedoptions_webservicesimple" />-->
 
-            <CheckBoxPreference
-                android:defaultValue="false"
-                android:key="webservice_remove_data"
-                android:persistent="true"
-                android:summary="@string/pref_advancedoptions_wipe_summary"
-                android:title="@string/pref_advancedoptions_wipe" />
+            <!--<CheckBoxPreference-->
+                <!--android:defaultValue="false"-->
+                <!--android:key="webservice_remove_data"-->
+                <!--android:persistent="true"-->
+                <!--android:summary="@string/pref_advancedoptions_wipe_summary"-->
+                <!--android:title="@string/pref_advancedoptions_wipe" />-->
 
-            <CheckBoxPreference
-                android:defaultValue="false"
-                android:key="frequency_enforce_all"
-                android:persistent="true"
-                android:summary="@string/pref_advancedoptions_enforce_frequency_all_summary"
-                android:title="@string/pref_advancedoptions_enforce_frequency_all" />
+            <!--<CheckBoxPreference-->
+                <!--android:defaultValue="false"-->
+                <!--android:key="frequency_enforce_all"-->
+                <!--android:persistent="true"-->
+                <!--android:summary="@string/pref_advancedoptions_enforce_frequency_all_summary"-->
+                <!--android:title="@string/pref_advancedoptions_enforce_frequency_all" />-->
 
-        </PreferenceScreen>
+        <!--</PreferenceScreen>-->
 
-    </PreferenceCategory>
+    <!--</PreferenceCategory>-->
 
 </PreferenceScreen>
