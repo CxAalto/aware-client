@@ -5,9 +5,22 @@
     <string name="aware_esm_questions">Napauta tätä vastataksesi</string>
     <string name="aware_activate_accessibility_title">Ota käyttöön MoMoMood</string>
     <string name="aware_activate_accessibility">Napauta tätä ottaaksesi käyttöösi esteettömän palvelun.</string>
-    <string name="aware_activate_battery_optimize_ignore_title">Mobiiliapplikaatiotutkimus Akun Käytön Optimointi</string>
-    <string name="aware_activate_battery_optimize_ignore">Napauta ja lisää huomiotta akun optimointi luettelo.</string>
+    <string name="aware_activate_battery_optimize_ignore_title">Poista MoMoMood akun käytön optimointi</string>
+    <string name="aware_activate_battery_optimize_ignore">Napauta ja lisää poikkeus akun optimointi luetteloon.</string>
     <string name="aware_battery_recharge">Lataa uudelleen puhelimesi mahdollisimman pian.</string>
     <string name="foreground_notification_title">MoMoMood</string>
     <string name="foreground_notification_text">Tietojenkeruu on aktiivinen</string>
+    <string name="pref_device_section">Laite</string>
+    <string name="pref_device_id">Laite ID</string>
+    <string name="aware_sensors">MoMoMood</string>
+    <string name="aware_esm_other">Muuta</string>
+    <string name="aware_esm_other_follow">Mitä?</string>
+    <string name="sign_up">Liity</string>
+    <string name="sync_low_memory_title">RAM-muisti vähissä</string>
+    <string name="sync_low_memory_text">Tyhjennä viime aikoina käytetyt sovellukset koskettamalla ja pyyhkäisemällä.</string>
+    <string name="esm_button_cancel">Peruuta</string>
+    <string name="pref_device_label">Laite nimi</string>
+    <string name="pref_study_wifionly">Ainostaan Wi-Fi-yhteydet</string>
+    <string name="pref_study_wifionly_summary">Siirrä dataa ainoastaan WiFi-yhteydellä</string>
+    <string name="momomood_desc">Tutkimus: Mielialan seuranta älypuhelinsovelluksen avulla. HUS 2018-2020</string>
 </resources>
